@@ -1,0 +1,88 @@
+import os
+import numpy as np
+import pandas as pd
+from . import config as c
+
+
+def read_all_raw_data(verbose=False):
+    try:
+        final_df = pd.DataFrame()
+        for file in os.listdir('rig_data'):
+            if verbose:
+                print(f'Reading {file}')
+            if file.endswith('.csv'):
+                current_df = pd.read_csv(os.path.join(c.DATA_PATH, file),
+                                         usecols=c.FEATURES,
+                                         index_col=False,
+                                         header=0)
+            elif file.endswith('.xlsx'):
+                current_df = pd.read_excel(os.path.join(c.DATA_PATH, file),
+                                           usecols=c.FEATURES,
+                                           index_col=False,
+                                           header=0)
+            name_list = file.split('-')
+            if name_list[0].startswith(('h', 'H')):
+                current_df['UNIT'] = np.uint8(name_list[0][-2:])
+            current_df[c.FEATURES_NO_TIME] = current_df[
+                c.FEATURES_NO_TIME].apply(pd.to_numeric, errors='coerce')
+            current_df = current_df.dropna(axis=0)
+            current_df[c.FEATURES_NO_TIME] = current_df[
+                c.FEATURES_NO_TIME].astype(np.float32)
+            current_df['STEP'] = current_df['STEP'].astype(np.uint8)
+            final_df = pd.concat((final_df, current_df), ignore_index=True)
+        return final_df
+    except:
+        print('No "rig_data" directory found')
+        return None
+
+
+def read_raw_unit_data(unit_id='HYD000091-R1_RAW'):
+    try:
+        unit_df = pd.read_csv(os.path.join(c.DATA_PATH, unit_id + '.csv'),
+                              usecols=c.FEATURES,
+                              index_col=False,
+                              header=0)
+    except:
+        try:
+            unit_df = pd.read_excel(os.path.join(c.DATA_PATH,
+                                                 unit_id + '.xlsx'),
+                                    usecols=c.FEATURES,
+                                    index_col=False,
+                                    header=0)
+        except:
+            print(f'No {unit_id} file found')
+            return None
+    unit_df[c.FEATURES_NO_TIME] = unit_df[c.FEATURES_NO_TIME].apply(
+        pd.to_numeric, errors='coerce')
+    unit_df[c.FEATURES_NO_TIME] = unit_df[c.FEATURES_NO_TIME].astype(
+        np.float32)
+    unit_df = unit_df.dropna(axis=0)
+    return unit_df
+
+
+def read_combined_data():
+    try:
+        df = pd.read_csv('combined_df.csv',
+                         usecols=c.FEATURES,
+                         index_col=False)
+        df[c.FEATURES_NO_TIME] = df[c.FEATURES_NO_TIME].apply(pd.to_numeric,
+                                                              errors='coerce')
+        df[c.FEATURES_NO_TIME] = df[c.FEATURES_NO_TIME].astype(np.float32)
+        df = df.dropna(axis=0)
+        return df
+    except:
+        print('No "combined_df.csv" found in the current directory')
+        return None
+
+
+def read_summary_file():
+    try:
+        xl = pd.ExcelFile('report template-V4.xlsx')
+        units = {}
+        for sheet in xl.sheet_names:
+            if 'HYD' in sheet:
+                units[f'{sheet}'] = pd.read_excel(xl, sheet_name=sheet)
+        return units
+    except:
+        print('No "report template-V4.xlsx" found')
+        return None

@@ -1,0 +1,8 @@
+__pycache__*
+.vscode/*
+utils/__pycache__*
+images/*
+rig_data/*
+*.ipynb
+*.csv
+*.xlsx
