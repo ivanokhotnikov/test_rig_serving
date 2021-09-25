@@ -20,7 +20,7 @@ import utils.plotters as p
 import utils.config as c
 
 
-def load_data():
+def load_data(read_all=True, raw=False, unit=None):
     if read_all:
         if raw:
             return r.read_all_raw_data()
@@ -42,7 +42,7 @@ def remove_step_zero(df):
     return df.drop(df[df['STEP'] == 0].index, axis=0)
 
 
-def cv(params, df):
+def cv(params, df, features, target):
     X_TRAIN, X_TEST, Y_TRAIN, Y_TEST = train_test_split(df[features].values,
                                                         df[target].values,
                                                         random_state=c.SEED,
@@ -68,7 +68,7 @@ def cv(params, df):
     return log_loss(Y_TRAIN, oof), log_loss(Y_TEST, pred)
 
 
-def objective(trial):
+def objective(trial, X_TRAIN, Y_TRAIN):
     x_train, x_val, y_train, y_val = train_test_split(
         X_TRAIN,
         Y_TRAIN,
@@ -87,7 +87,7 @@ def objective(trial):
                                                  0.9),
         'colsample_bynode': trial.suggest_float('colsample_bynode', 0.6, 0.9),
         'gamma': trial.suggest_int('gamma', 0, 20),
-        'n_estimators': 1000,
+        'n_estimators': 10000,
         'eta': 0.1,
         'tree_method': 'gpu_hist',
         'use_label_encoder': False,
@@ -103,28 +103,27 @@ def objective(trial):
     return log_loss(y_val, preds)
 
 
-if __name__ == '__main__':
+def main():
     raw = False
     read_all = True
-    optimize = True
-    is_optimized = False
-    unit = 'HYD000089-R1_RAW' if not read_all else None
+    optimize = False
 
-    df = load_data()
+    df = load_data(read_all=read_all, raw=raw)
     df = remove_outliers(df, z_score=5)
     target = 'STEP'
+    n_classes = len(df[target].unique())
+    df[target] = df[target].astype(np.uint8)
     features = c.FEATURES_NO_TIME_AND_COMMANDS
     features.remove(target)
     scaler = StandardScaler()
     df[features] = scaler.fit_transform(df[features])
+    X_TRAIN, X_TEST, Y_TRAIN, Y_TEST = train_test_split(df[features].values,
+                                                        df[target].values,
+                                                        test_size=0.2,
+                                                        stratify=df[target],
+                                                        random_state=c.SEED,
+                                                        shuffle=True)
     if optimize:
-        X_TRAIN, X_TEST, Y_TRAIN, Y_TEST = train_test_split(
-            df[features].values,
-            df[target].values,
-            test_size=0.2,
-            stratify=df[target],
-            random_state=c.SEED,
-            shuffle=True)
         optimizer = optuna.create_study(direction='minimize',
                                         sampler=optuna.samplers.TPESampler(),
                                         pruner=optuna.pruners.MedianPruner())
@@ -133,33 +132,29 @@ if __name__ == '__main__':
         flag = 'opt'
     else:
         best_params = {
-            'max_depth': 15,
-            'reg_alpha': 6,
-            'reg_lambda': 36,
-            'min_child_weight': 18,
-            'subsample': 0.8797985875169991,
-            'colsample_bytree': 0.7440469154006446,
-            'colsample_bylevel': 0.7381166426468402,
-            'colsample_bynode': 0.6722527411125266,
-            'gamma': 2,
-            'n_estimators': 1000,
+            'max_depth': 14,
+            'reg_alpha': 8,
+            'reg_lambda': 17,
+            'min_child_weight': 9,
+            'subsample': 0.7885438852822269,
+            'colsample_bytree': 0.7175526266043986,
+            'colsample_bylevel': 0.7349928190608926,
+            'colsample_bynode': 0.6327256542317266,
+            'gamma': 6,
+            'n_estimators': 10000,
             'eta': 0.1,
             'tree_method': 'gpu_hist',
             'use_label_encoder': False,
         }
         flag = 'reg'
-    oof = np.zeros(X_TRAIN.shape)
-    pred = np.zeros(X_TEST.shape)
-    skf = StratifiedKFold(n_splits=c.FOLDS, shuffle=True)
+    oof = np.zeros((X_TRAIN.shape[0], n_classes))
+    pred = np.zeros((X_TEST.shape[0], n_classes))
+    skf = StratifiedKFold(n_splits=c.FOLDS, shuffle=True, random_state=c.SEED)
     for fold, (train_idx, val_idx) in enumerate(skf.split(X_TRAIN, Y_TRAIN)):
         print(f'Fold {fold+1} started')
         x_train, x_val = X_TRAIN[train_idx], X_TRAIN[val_idx]
         y_train, y_val = Y_TRAIN[train_idx], Y_TRAIN[val_idx]
-        clf = XGBClassifier(**best_params,
-                            n_estimators=10000,
-                            eta=0.01,
-                            use_label_encoder=False,
-                            tree_method='gpu_hist')
+        clf = XGBClassifier(**best_params)
         clf.fit(x_train,
                 y_train,
                 eval_metric='mlogloss',
@@ -168,7 +163,6 @@ if __name__ == '__main__':
                 verbose=c.VERBOSITY)
         oof[val_idx] = clf.predict_proba(x_val)
         pred += clf.predict_proba(X_TEST) / c.FOLDS
-        print(f'Fold {fold+1} log_loss: {log_loss(y_val, oof[val_idx]):.4f}\n')
     val_score = log_loss(Y_TRAIN, oof)
     test_score = log_loss(Y_TEST, pred)
     clf.save_model(
@@ -176,3 +170,7 @@ if __name__ == '__main__':
             c.MODELS_PATH,
             f'{flag}_{val_score:.4f}_{test_score:.4f}_{datetime.datetime.now():%d%m_%I%M}.json'
         ))
+
+
+if __name__ == '__main__':
+    main()
