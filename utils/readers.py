@@ -5,35 +5,39 @@ from . import config as c
 
 
 def read_all_raw_data(verbose=False):
-    try:
-        final_df = pd.DataFrame()
-        for file in os.listdir('rig_data'):
-            if verbose:
-                print(f'Reading {file}')
-            if file.endswith('.csv'):
-                current_df = pd.read_csv(os.path.join(c.DATA_PATH, file),
-                                         usecols=c.FEATURES,
-                                         index_col=False,
-                                         header=0)
-            elif file.endswith('.xlsx'):
-                current_df = pd.read_excel(os.path.join(c.DATA_PATH, file),
-                                           usecols=c.FEATURES,
-                                           index_col=False,
-                                           header=0)
-            name_list = file.split('-')
-            if name_list[0].startswith(('h', 'H')):
-                current_df['UNIT'] = np.uint8(name_list[0][-2:])
-            current_df[c.FEATURES_NO_TIME] = current_df[
-                c.FEATURES_NO_TIME].apply(pd.to_numeric, errors='coerce')
-            current_df = current_df.dropna(axis=0)
-            current_df[c.FEATURES_NO_TIME] = current_df[
-                c.FEATURES_NO_TIME].astype(np.float32)
-            current_df['STEP'] = current_df['STEP'].astype(np.uint8)
-            final_df = pd.concat((final_df, current_df), ignore_index=True)
-        return final_df
-    except:
-        print('No "rig_data" directory found')
-        return None
+    final_df = pd.DataFrame()
+    for file in os.listdir('rig_data'):
+        if verbose:
+            print(f'Reading {file}')
+        if file.endswith('.csv'):
+            current_df = pd.read_csv(
+                os.path.join(c.DATA_PATH, file),
+                usecols=c.FEATURES,
+                index_col=False,
+                header=0,
+            )
+        elif file.endswith('.xlsx'):
+            current_df = pd.read_excel(
+                os.path.join(c.DATA_PATH, file),
+                usecols=c.FEATURES,
+                index_col=False,
+                header=0,
+            )
+        name_list = file.split('-')
+        if name_list[0].startswith(('h', 'H')):
+            current_df['UNIT'] = np.uint8(name_list[0][-2:])
+        current_df[c.FEATURES_NO_TIME] = current_df[c.FEATURES_NO_TIME].apply(
+            pd.to_numeric,
+            errors='coerce',
+            downcast='float',
+        )
+        current_df['STEP'] = current_df['STEP'].astype(
+            np.uint8,
+            errors='ignore',
+        )
+        current_df = current_df.dropna(axis=0)
+        final_df = pd.concat((final_df, current_df), ignore_index=True)
+    return final_df
 
 
 def read_raw_unit_data(unit_id='HYD000091-R1_RAW'):
@@ -86,3 +90,16 @@ def read_summary_file():
     except:
         print('No "report template-V4.xlsx" found')
         return None
+
+
+def load_data(read_all=True, raw=False, unit=None):
+    if read_all:
+        if raw:
+            return read_all_raw_data()
+        else:
+            return read_combined_data()
+    else:
+        if raw:
+            return read_raw_unit_data(unit_id=unit)
+        else:
+            return pd.DataFrame(read_summary_file())

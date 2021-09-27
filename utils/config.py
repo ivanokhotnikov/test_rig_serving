@@ -44,6 +44,7 @@ FEATURES = [
     'M7 Torque',
 ]
 FEATURES_NO_TIME = [
+    # 'TIME',
     'STEP',
     'HSU DEMAND',
     'M1 SPEED',
@@ -79,6 +80,7 @@ FEATURES_NO_TIME = [
     'M7 Torque',
 ]
 FEATURES_NO_TIME_AND_COMMANDS = [
+    # 'TIME',
     'STEP',
     # 'HSU DEMAND',
     'M1 SPEED',
