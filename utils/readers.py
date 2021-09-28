@@ -67,11 +67,15 @@ def read_raw_unit_data(unit_id='HYD000091-R1_RAW'):
 def read_combined_data():
     try:
         df = pd.read_csv('combined_df.csv',
-                         usecols=c.FEATURES,
+                         usecols=c.FEATURES.append('UNIT'),
                          index_col=False)
         df[c.FEATURES_NO_TIME] = df[c.FEATURES_NO_TIME].apply(pd.to_numeric,
                                                               errors='coerce')
         df[c.FEATURES_NO_TIME] = df[c.FEATURES_NO_TIME].astype(np.float32)
+        df[['STEP', 'UNIT']] = df[['STEP', 'UNIT']].astype(
+            np.uint8,
+            errors='ignore',
+        )
         df = df.dropna(axis=0)
         return df
     except:

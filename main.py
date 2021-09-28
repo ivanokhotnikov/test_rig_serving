@@ -1,8 +1,6 @@
 import os
-import pickle
 import datetime
 import numpy as np
-import pandas as pd
 
 from scipy import stats
 
@@ -15,7 +13,6 @@ import optuna
 from xgboost import XGBClassifier
 
 import utils.readers as r
-import utils.plotters as p
 import utils.config as c
 
 
