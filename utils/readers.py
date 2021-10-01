@@ -6,6 +6,7 @@ from . import config as c
 
 def read_all_raw_data(verbose=False):
     final_df = pd.DataFrame()
+    units = []
     for file in os.listdir('rig_data'):
         if verbose:
             print(f'Reading {file}')
@@ -23,14 +24,17 @@ def read_all_raw_data(verbose=False):
                 index_col=False,
                 header=0,
             )
-        name_list = file.split('-')
-        if name_list[0].startswith(('h', 'H')):
-            current_df['UNIT'] = np.uint8(name_list[0][-2:])
         current_df[c.FEATURES_NO_TIME] = current_df[c.FEATURES_NO_TIME].apply(
             pd.to_numeric,
             errors='coerce',
             downcast='float',
         )
+        name_list = file.split('-')
+        unit = np.uint8(name_list[0][-2:])
+        units.append(unit)
+        current_df['UNIT'] = unit
+        current_df['TEST'] = np.uint8(
+            units.count(unit))
         current_df['STEP'] = current_df['STEP'].astype(
             np.uint8,
             errors='ignore',
@@ -72,7 +76,7 @@ def read_combined_data():
         df[c.FEATURES_NO_TIME] = df[c.FEATURES_NO_TIME].apply(pd.to_numeric,
                                                               errors='coerce')
         df[c.FEATURES_NO_TIME] = df[c.FEATURES_NO_TIME].astype(np.float32)
-        df[['STEP', 'UNIT']] = df[['STEP', 'UNIT']].astype(
+        df[['STEP', 'UNIT', 'TEST']] = df[['STEP', 'UNIT', 'TEST']].astype(
             np.uint8,
             errors='ignore',
         )
