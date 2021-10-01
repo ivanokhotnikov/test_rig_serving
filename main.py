@@ -14,6 +14,7 @@ from xgboost import XGBClassifier
 
 import utils.readers as r
 import utils.config as c
+import utils.plotters as p
 
 
 def remove_outliers(df, z_score):
@@ -98,24 +99,23 @@ def optimize_xgb(trial, df, features, target):
     return log_loss(y_val, preds)
 
 
-def main():
-    optimize = False
-    df = r.load_data(read_all=True, raw=True)
-    df = remove_outliers(df, z_score=5)
-    target = 'STEP'
-    df[target] = df[target].astype(np.uint8)
+def optuna_optimize():
+    optimizer = optuna.create_study(
+        direction='minimize',
+        sampler=optuna.samplers.TPESampler(),
+        pruner=optuna.pruners.MedianPruner(),
+    )
+    optimizer.optimize(optimize_xgb, timeout=c.OPTIMIZATION_TIME_BUDGET)
+    return optimizer.best_params
+
+
+def scale_optmize_cv_xgb(df, optimize=False, target='STEP'):
     features = c.FEATURES_NO_TIME_AND_COMMANDS
     features.remove(target)
     scaler = StandardScaler()
     df[features] = scaler.fit_transform(df[features])
     if optimize:
-        optimizer = optuna.create_study(
-            direction='minimize',
-            sampler=optuna.samplers.TPESampler(),
-            pruner=optuna.pruners.MedianPruner(),
-        )
-        optimizer.optimize(optimize_xgb, timeout=c.OPTIMIZATION_TIME_BUDGET)
-        best_params = optimizer.best_params
+        best_params = optuna_optimize()
     else:
         best_params = {
             'max_depth': 14,
@@ -140,6 +140,12 @@ def main():
         features,
         target,
     )
+
+
+def main():
+    df = r.load_data(read_all=True, raw=False)
+    p.plot_per_step_feature(df, step=18, feature='PT4', single_plot=True)
+    p.plot_per_step(df, step=18)
 
 
 if __name__ == '__main__':
