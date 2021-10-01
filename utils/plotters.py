@@ -1,10 +1,8 @@
 import os
 import numpy as np
+import seaborn as sns
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
-import plotly.express as px
-import plotly.figure_factory as ff
-import seaborn as sns
 from plotly.subplots import make_subplots
 
 from . import readers as r
@@ -86,3 +84,58 @@ def plot_conf_matrix(cm, clf_name):
     plt.xlabel('Predicted step')
     save_fig(f'confusion_matrix_{clf_name}')
     plt.show()
+
+
+def plot_per_step_feature(df, step=18, feature='PT4', single_plot=True):
+    if single_plot:
+        fig = go.Figure()
+        for unit in df['UNIT'].unique():
+            for test in df[(df['UNIT'] == unit)]['TEST'].unique():
+                if not df[(df['TEST'] == test) & (df['STEP'] == step) &
+                          (df['UNIT'] == unit)].empty:
+                    fig.add_trace(
+                        go.Scatter(y=df[(df['UNIT'] == unit)
+                                        & (df['STEP'] == step)
+                                        & (df['TEST'] == test)][feature],
+                                   name=f'{unit}-{test}'))
+        fig.update_layout(template='simple_white',
+                          title=f'Step {step}, {feature}')
+    else:
+        titles = [
+            f'{unit}-{test}' for unit in df['UNIT'].unique()
+            for test in df[df['UNIT'] == unit]['TEST'].unique()
+            if not df[(df['TEST'] == test) & (df['STEP'] == step)
+                      & (df['UNIT'] == unit)][feature].empty
+        ]
+        fig = make_subplots(rows=len(titles), cols=1, subplot_titles=titles)
+        current_row = 1
+        for unit in df['UNIT'].unique():
+            for test in df[(df['UNIT'] == unit)]['TEST'].unique():
+                if not df[(df['TEST'] == test) & (df['STEP'] == step) &
+                          (df['UNIT'] == unit)].empty:
+                    fig.append_trace(
+                        go.Scatter(y=df[(df['UNIT'] == unit)
+                                        & (df['STEP'] == step)
+                                        & (df['TEST'] == test)][feature]),
+                        row=current_row,
+                        col=1)
+                    current_row += 1
+        fig.update_layout(template='simple_white',
+                          height=12000,
+                          title=f'Step {step}, {feature}',
+                          showlegend=False)
+    fig.show()
+
+def plot_per_step(df, step):
+    for feature in c.FEATURES_NO_TIME_AND_COMMANDS:
+        fig = go.Figure()
+        for unit in df['UNIT'].unique():
+            for test in df[(df['UNIT'] == unit)]['TEST'].unique():
+                if not df[(df['TEST'] == test) & (df['STEP'] == step) &
+                        (df['UNIT'] == unit)].empty:
+                    fig.add_trace(
+                        go.Scatter(y=df[(df['UNIT'] == unit)
+                                        & (df['STEP'] == step)
+                                        & (df['TEST'] == test)][feature], name=f'{unit}-{test}'))
+        fig.update_layout(template='simple_white', title=f'Step {step}, {feature}')
+        fig.show()
