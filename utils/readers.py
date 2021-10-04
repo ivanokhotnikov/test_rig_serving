@@ -4,37 +4,45 @@ import pandas as pd
 from . import config as c
 
 
-def read_all_raw_data(verbose=False):
+def read_all_raw_data(verbose=True):
     final_df = pd.DataFrame()
     units = []
     for file in os.listdir('rig_data'):
         if verbose:
             print(f'Reading {file}')
-        if file.endswith('.csv'):
-            current_df = pd.read_csv(
-                os.path.join(c.DATA_PATH, file),
-                usecols=c.FEATURES,
-                index_col=False,
-                header=0,
-            )
-        elif file.endswith('.xlsx'):
-            current_df = pd.read_excel(
-                os.path.join(c.DATA_PATH, file),
-                usecols=c.FEATURES,
-                index_col=False,
-                header=0,
-            )
+        try:
+            if file.endswith('.csv'):
+                current_df = pd.read_csv(
+                    os.path.join(c.DATA_PATH, file),
+                    usecols=c.FEATURES,
+                    on_bad_lines='skip',
+                    index_col=False,
+                    header=0,
+                )
+            elif file.endswith('.xlsx'):
+                current_df = pd.read_excel(
+                    os.path.join(c.DATA_PATH, file),
+                    usecols=c.FEATURES,
+                    index_col=False,
+                    header=0,
+                )
+        except ValueError:
+            if verbose:
+                print(f'{file} got a faulty header')
+            continue
         current_df[c.FEATURES_NO_TIME] = current_df[c.FEATURES_NO_TIME].apply(
             pd.to_numeric,
             errors='coerce',
             downcast='float',
         )
         name_list = file.split('-')
-        unit = np.uint8(name_list[0][-2:])
+        try:
+            unit = np.uint8(name_list[0][-2:])
+        except ValueError:
+            unit = np.uint8(name_list[0].split('_')[0][-2:])
         units.append(unit)
         current_df['UNIT'] = unit
-        current_df['TEST'] = np.uint8(
-            units.count(unit))
+        current_df['TEST'] = np.uint8(units.count(unit))
         current_df['STEP'] = current_df['STEP'].astype(
             np.uint8,
             errors='ignore',
@@ -100,10 +108,10 @@ def read_summary_file():
         return None
 
 
-def load_data(read_all=True, raw=False, unit=None):
+def load_data(read_all=True, raw=False, unit=None, verbose=True):
     if read_all:
         if raw:
-            return read_all_raw_data()
+            return read_all_raw_data(verbose=verbose)
         else:
             return read_combined_data()
     else:
