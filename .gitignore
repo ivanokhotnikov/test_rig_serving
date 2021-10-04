@@ -6,3 +6,4 @@ rig_data/*
 *.ipynb
 *.csv
 *.xlsx
+*.txt
