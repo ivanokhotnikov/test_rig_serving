@@ -116,6 +116,20 @@ FEATURES_NO_TIME_AND_COMMANDS = [
     'M7 Torque',
 ]
 
+TRIAL_DRIFT = [
+    'STEP',
+    'UNIT',
+    'TEST',
+    'M3 Amp',
+    'M3 Torque',
+    'Servo PT',
+    'HSU IN',
+    'TT2',
+    'HSU OUT',
+    'M7 Amp',
+    'M7 Torque',
+]
+
 FOLDS = 5
 SEED = 2
 VERBOSITY = 100
