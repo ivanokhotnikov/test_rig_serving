@@ -126,16 +126,47 @@ def plot_per_step_feature(df, step=18, feature='PT4', single_plot=True):
                           showlegend=False)
     fig.show()
 
+
 def plot_per_step(df, step):
     for feature in c.FEATURES_NO_TIME_AND_COMMANDS:
         fig = go.Figure()
         for unit in df['UNIT'].unique():
-            for test in df[(df['UNIT'] == unit)]['TEST'].unique():
-                if not df[(df['TEST'] == test) & (df['STEP'] == step) &
-                        (df['UNIT'] == unit)].empty:
-                    fig.add_trace(
-                        go.Scatter(y=df[(df['UNIT'] == unit)
-                                        & (df['STEP'] == step)
-                                        & (df['TEST'] == test)][feature], name=f'{unit}-{test}'))
-        fig.update_layout(template='simple_white', title=f'Step {step}, {feature}')
+            for test in df[(df['UNIT'] == unit)
+                           & (df['STEP'] == step)]['TEST'].unique():
+                fig.add_trace(
+                    go.Scatter(y=df[(df['UNIT'] == unit)
+                                    & (df['STEP'] == step)
+                                    & (df['TEST'] == test)][feature],
+                               name=f'{unit}-{test}'))
+        fig.update_layout(
+            template='simple_white',
+            title=f'Step {step}, {feature}',
+            xaxis_title='Time',
+        )
+        fig.show()
+
+
+def plot_means_per_step(df, step):
+    units = []
+    features_means = {
+        feature: []
+        for feature in c.FEATURES_NO_TIME_AND_COMMANDS
+    }
+    for feature in c.FEATURES_NO_TIME_AND_COMMANDS:
+        for unit in df['UNIT'].unique():
+            for test in df[(df['STEP'] == step)
+                           & (df['UNIT'] == unit)]['TEST'].unique():
+                features_means[feature].append(
+                    df[(df['STEP'] == step)
+                       & (df['UNIT'] == unit) &
+                       (df['TEST'] == test)][feature].mean())
+                units.append(unit)
+    for feature in c.FEATURES_NO_TIME_AND_COMMANDS:
+        fig = go.Figure(data=go.Scatter(
+            x=units, y=features_means[feature], mode='markers'))
+        fig.update_layout(
+            template='simple_white',
+            title=f'Step {step}, {feature} means',
+            xaxis_title='Unit',
+        )
         fig.show()
