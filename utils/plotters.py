@@ -86,7 +86,7 @@ def plot_conf_matrix(cm, clf_name):
     plt.show()
 
 
-def plot_per_step_feature(df, step=18, feature='PT4', single_plot=True):
+def plot_all_per_step_feature(df, step=18, feature='PT4', single_plot=True):
     if single_plot:
         fig = go.Figure()
         for unit in df['UNIT'].unique():
@@ -127,7 +127,7 @@ def plot_per_step_feature(df, step=18, feature='PT4', single_plot=True):
     fig.show()
 
 
-def plot_per_step(df, step):
+def plot_all_per_step(df, step):
     for feature in c.FEATURES_NO_TIME_AND_COMMANDS:
         fig = go.Figure()
         for unit in df['UNIT'].unique():
@@ -146,7 +146,7 @@ def plot_per_step(df, step):
         fig.show()
 
 
-def plot_means_per_step(df, step):
+def plot_all_means_per_step(df, step):
     units = []
     features_means = {
         feature: []
@@ -170,3 +170,24 @@ def plot_means_per_step(df, step):
             xaxis_title='Unit',
         )
         fig.show()
+
+
+def plot_kdes_per_step(df, step):
+    if 'TIME' in df.columns:
+        df.drop('TIME', axis=1, inplace=True)
+    fig, axes = plt.subplots(7, 5, figsize=(15, 15))
+    axes = axes.flatten()
+    for idx, (ax, col) in enumerate(zip(axes, df.columns)):
+        sns.kdeplot(
+            data=df[df['STEP'] == step],
+            x=col,
+            fill=True,
+            ax=ax,
+            warn_singular=False,
+        )
+        ax.set_yticks([])
+        ax.set_ylabel('')
+        ax.spines[['top', 'left', 'right']].set_visible(False)
+    fig.suptitle(f'STEP {step}')
+    fig.tight_layout()
+    plt.show()
