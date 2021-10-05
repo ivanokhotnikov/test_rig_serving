@@ -76,11 +76,15 @@ def read_raw_unit_data(unit_id='HYD000091-R1_RAW'):
     return unit_df
 
 
-def read_combined_data():
+def read_combined_data(verbose=True):
     try:
+        if verbose:
+            print('Reading "combined_df.csv"')
         df = pd.read_csv('combined_df.csv',
                          usecols=c.FEATURES.append('UNIT'),
                          index_col=False)
+        if verbose:
+            print('Processing data')
         df[c.FEATURES_NO_TIME] = df[c.FEATURES_NO_TIME].apply(pd.to_numeric,
                                                               errors='coerce')
         df[c.FEATURES_NO_TIME] = df[c.FEATURES_NO_TIME].astype(np.float32)
@@ -113,7 +117,7 @@ def load_data(read_all=True, raw=False, unit=None, verbose=True):
         if raw:
             return read_all_raw_data(verbose=verbose)
         else:
-            return read_combined_data()
+            return read_combined_data(verbose=verbose)
     else:
         if raw:
             return read_raw_unit_data(unit_id=unit)
