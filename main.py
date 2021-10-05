@@ -30,10 +30,13 @@ def get_performance_check_steps(df):
 
 def main():
     df = r.load_data(read_all=True, raw=False, verbose=True)
-    df = remove_outliers(df, z_score=5)
     df = get_performance_check_steps(df)
-    p.plot_per_step(df, step=29)
-    p.plot_means_per_step(df, step=29)
+    for step in df['STEP'].unique():
+        p.plot_kdes_per_step(df, step=step)
+    p.plot_all_per_step_feature(df, step=step, feature='PT4')
+    p.plot_all_per_step_feature(df, step=step, feature='M4 ANGLE')
+    p.plot_all_means_per_step(df, step=step)
+    p.plot_all_per_step(df, step=step)
 
 
 if __name__ == '__main__':
