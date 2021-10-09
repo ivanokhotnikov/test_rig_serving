@@ -191,3 +191,39 @@ def plot_kdes_per_step(df, step):
     fig.suptitle(f'STEP {step}')
     fig.tight_layout()
     plt.show()
+
+
+def plot_unit_per_step_feature(df, unit=89, step=23, feature='M1 SPEED'):
+    fig = go.Figure()
+    for test in df[(df['UNIT'] == unit)
+                   & (df['STEP'] == step)]['TEST'].unique():
+        fig.add_trace(
+            go.Scatter(y=df[(df['UNIT'] == unit)
+                            & (df['STEP'] == step)
+                            & (df['TEST'] == test)][feature],
+                       name=f'{unit}-{test}'))
+    fig.update_layout(
+        template='simple_white',
+        title=f'Step {step}, {feature}',
+        xaxis_title='TIME IN STEP',
+        yaxis_title=feature,
+        showlegend=True,
+    )
+    fig.show()
+
+
+def plot_unit_per_feature(df, unit=89, feature='M1 SPEED'):
+    fig = go.Figure()
+    for test in df[(df['UNIT'] == unit)]['TEST'].unique():
+        fig.add_trace(
+            go.Scatter(y=df[(df['UNIT'] == unit)
+                            & (df['TEST'] == test)][feature],
+                       name=f'{unit}-{test}'))
+    fig.update_layout(
+        template='simple_white',
+        title=f'{feature}',
+        xaxis_title='TIME',
+        yaxis_title=feature,
+        showlegend=True,
+    )
+    fig.show()
