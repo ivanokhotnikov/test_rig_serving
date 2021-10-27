@@ -115,7 +115,6 @@ FEATURES_NO_TIME_AND_COMMANDS = [
     'M7 Amp',
     'M7 Torque',
 ]
-
 TRIAL_DRIFT = [
     'STEP',
     'UNIT',

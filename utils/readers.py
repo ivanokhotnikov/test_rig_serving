@@ -1,6 +1,8 @@
 import os
 import numpy as np
 import pandas as pd
+
+from scipy import stats
 from . import config as c
 
 
@@ -123,3 +125,24 @@ def load_data(read_all=True, raw=False, unit=None, verbose=True):
             return read_raw_unit_data(unit_id=unit)
         else:
             return pd.DataFrame(read_summary_file())
+
+
+def remove_outliers(df, z_score):
+    return df[(np.abs(stats.zscore(df[c.FEATURES_NO_TIME])) < z_score).all(
+        axis=1)]
+
+
+def remove_step_zero(df):
+    return df.drop(df[df['STEP'] == 0].index, axis=0)
+
+
+def get_warm_up_steps(df):
+    return df[(df['STEP'] >= 1) & (df['STEP'] <= 11)]
+
+
+def get_break_in_steps(df):
+    return df[(df['STEP'] >= 12) & (df['STEP'] <= 22)]
+
+
+def get_performance_check_steps(df):
+    return df[(df['STEP'] >= 23) & (df['STEP'] <= 33)]
