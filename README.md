@@ -1,6 +1,6 @@
 # Test rig condition monitoring and predictive maintenance
 
-The repository contains the development of an algorithm to monitor the test rig condition and to predict a need for maintenance in advance of rig failure or excessive deterioration of its performance. The code also serves to provide advanced analytics of test article performance over time or during the test cycle.
+The repository contains the development of an algorithm to monitor the test rig condition and to predict a need for maintenance in advance of a rig failure or excessive deterioration of its performance. The code also serves to provide advanced analytics of test article performance over time or during the test cycle.
 
 ## Models
 
