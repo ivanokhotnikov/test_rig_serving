@@ -227,3 +227,35 @@ def plot_unit_per_feature(df, unit=89, feature='M1 SPEED'):
         showlegend=True,
     )
     fig.show()
+
+
+def plot_anomalies_per_unit(df, unit=89):
+    for feature in c.FEATURES_NO_TIME_AND_COMMANDS:
+        for test in df[(df['UNIT'] == unit)]['TEST'].unique():
+            fig = go.Figure()
+            fig.add_scatter(
+                x=df[(df['UNIT'] == unit) & (df['TEST'] == test)]['TIME'],
+                y=df[(df['UNIT'] == unit) & (df['TEST'] == test)][feature],
+                mode='lines',
+                name='Inlier',
+                line={
+                    'color': 'steelblue',
+                },
+            )
+            fig.add_scatter(
+                x=df[(df['UNIT'] == unit) & (df['TEST'] == test) &
+                     (df['ANOMALY'] == -1)]['TIME'],
+                y=df[(df['UNIT'] == unit) & (df['TEST'] == test) &
+                     (df['ANOMALY'] == -1)][feature],
+                mode='markers',
+                name='Outlier',
+                line={
+                    'color': 'indianred',
+                },
+            )
+            fig.update_layout(
+                yaxis={'title': feature},
+                template='none',
+                title=f'Unit {unit}-{test}',
+            )
+            fig.show()
