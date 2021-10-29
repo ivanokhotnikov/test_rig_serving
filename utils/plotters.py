@@ -230,8 +230,8 @@ def plot_unit_per_feature(df, unit=89, feature='M1 SPEED'):
 
 
 def plot_anomalies_per_unit(df, unit=89):
-    for feature in c.FEATURES_NO_TIME_AND_COMMANDS:
-        for test in df[(df['UNIT'] == unit)]['TEST'].unique():
+    for test in df[(df['UNIT'] == unit)]['TEST'].unique():
+        for feature in c.FEATURES_NO_TIME_AND_COMMANDS:
             fig = go.Figure()
             fig.add_scatter(
                 x=df[(df['UNIT'] == unit) & (df['TEST'] == test)]['TIME'],
