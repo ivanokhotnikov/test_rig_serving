@@ -43,6 +43,7 @@ def read_all_raw_data(verbose=True):
         except ValueError:
             unit = np.uint8(name_list[0].split('_')[0][-2:])
         units.append(unit)
+        current_df['ARMANI'] = 1 if name_list[0][3] == '2' else 0
         current_df['UNIT'] = unit
         current_df['TEST'] = np.uint8(units.count(unit))
         current_df['STEP'] = current_df['STEP'].astype(
