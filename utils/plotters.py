@@ -229,9 +229,10 @@ def plot_unit_per_feature(df, unit=89, feature='M1 SPEED'):
     fig.show()
 
 
-def plot_anomalies_per_unit(df, unit=89):
+def plot_anomalies_per_unit_feature(df, unit=89, feature='PT4'):
     for test in df[(df['UNIT'] == unit)]['TEST'].unique():
-        for feature in c.FEATURES_NO_TIME_AND_COMMANDS:
+        if any(df[(df['UNIT'] == unit)
+                  & (df['TEST'] == test)]['ANOMALY'] == -1):
             fig = go.Figure()
             fig.add_scatter(
                 x=df[(df['UNIT'] == unit) & (df['TEST'] == test)]['TIME'],
@@ -259,3 +260,5 @@ def plot_anomalies_per_unit(df, unit=89):
                 title=f'Unit {unit}-{test}',
             )
             fig.show()
+        else:
+            print(f'No anomalies found in {unit}-{test} test')
