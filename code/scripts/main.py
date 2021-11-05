@@ -5,7 +5,6 @@ from utils.plotters import plot_kdes_per_step, plot_all_per_step_feature, plot_a
 def main():
     df = load_data(read_all=True, raw=False, verbose=True)
     df = get_performance_check_steps(df)
-    plot_kdes_per_step(df, step=23)
 
 
 if __name__ == '__main__':

@@ -1,10 +1,9 @@
 import os
 
-IMAGES_PATH = os.path.join('outputs', 'images')
-MODELS_PATH = os.path.join('outputs', 'models')
-DATA_PATH = os.path.join('data')
-os.makedirs(IMAGES_PATH, exist_ok=True)
-os.makedirs(MODELS_PATH, exist_ok=True)
+PROJECT_DIR = '.'
+IMAGES_PATH = os.path.join(PROJECT_DIR, 'outputs', 'images')
+MODELS_PATH = os.path.join(PROJECT_DIR, 'outputs', 'models')
+DATA_PATH = os.path.join(PROJECT_DIR, 'data')
 
 FEATURES = [
     'TIME',
