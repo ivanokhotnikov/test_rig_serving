@@ -1,8 +1,10 @@
 __pycache__*
 .vscode/*
-utils/__pycache__*
-images/*
-rig_data/*
+code/scripts/utils/__pycache__*
+code/scripts/__pycache__*
+code/notebooks/*
+data/*
+outputs/*
 *.ipynb
 *.csv
 *.xlsx
