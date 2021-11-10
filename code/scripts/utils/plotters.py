@@ -9,8 +9,8 @@ from config import IMAGES_PATH, FEATURES_NO_TIME, FEATURES_NO_TIME_AND_COMMANDS
 
 
 class Plotter:
-    def save_fig(self,
-                 fig_id,
+    @staticmethod
+    def save_fig(fig_id,
                  tight_layout=True,
                  fig_extension="png",
                  resolution=300):
@@ -20,7 +20,8 @@ class Plotter:
             plt.tight_layout()
         plt.savefig(path, format=fig_extension, dpi=resolution)
 
-    def plot_unit_raw_data(self, df, unit=89, in_time=False, save=False):
+    @staticmethod
+    def plot_unit_raw_data(df, unit=89, in_time=False, save=False):
         fig = make_subplots(rows=len(FEATURES_NO_TIME),
                             cols=1,
                             subplot_titles=FEATURES_NO_TIME)
@@ -44,7 +45,8 @@ class Plotter:
                 os.path.join(IMAGES_PATH, f'unit_{unit}' + '.' + 'png'))
         fig.show()
 
-    def plot_unit_from_summary_file(self, unit_id='HYD000091-R1'):
+    @staticmethod
+    def plot_unit_from_summary_file(unit_id='HYD000091-R1'):
         from readers import DataReader
 
         reader = DataReader()
@@ -70,17 +72,19 @@ class Plotter:
                           showlegend=False)
         fig.show()
 
-    def plot_covariance(self, df, save=False):
+    @staticmethod
+    def plot_covariance(cls, df, save=False):
         plt.figure(figsize=(10, 10))
         sns.heatmap(df[FEATURES_NO_TIME_AND_COMMANDS].cov(),
                     cmap='RdYlBu_r',
                     linewidths=.5,
                     square=True,
                     cbar=False)
-        if save: self.save_fig('covariance')
+        if save: cls.save_fig('covariance')
         plt.show()
 
-    def plot_conf_matrix(self, cm, clf_name, save=False):
+    @classmethod
+    def plot_conf_matrix(cls, cm, clf_name, save=False):
         np.fill_diagonal(cm, 0)
         plt.figure(figsize=(18, 18))
         sns.heatmap(cm,
@@ -91,11 +95,11 @@ class Plotter:
                     fmt='d')
         plt.ylabel('True step')
         plt.xlabel('Predicted step')
-        if save: self.save_fig(f'confusion_matrix_{clf_name}')
+        if save: cls.save_fig(f'confusion_matrix_{clf_name}')
         plt.show()
 
-    def plot_all_per_step_feature(self,
-                                  df,
+    @staticmethod
+    def plot_all_per_step_feature(df,
                                   step=18,
                                   feature='PT4',
                                   single_plot=True):
@@ -139,7 +143,8 @@ class Plotter:
                               showlegend=False)
         fig.show()
 
-    def plot_all_per_step(self, df, step):
+    @staticmethod
+    def plot_all_per_step(df, step):
         for feature in FEATURES_NO_TIME_AND_COMMANDS:
             fig = go.Figure()
             for unit in df['UNIT'].unique():
@@ -157,7 +162,8 @@ class Plotter:
             )
             fig.show()
 
-    def plot_all_means_per_step(self, df, step):
+    @staticmethod
+    def plot_all_means_per_step(df, step):
         units = []
         features_means = {
             feature: []
@@ -182,7 +188,8 @@ class Plotter:
             )
             fig.show()
 
-    def plot_kdes_per_step(self, df, step):
+    @staticmethod
+    def plot_kdes_per_step(df, step):
         if 'TIME' in df.columns:
             df.drop('TIME', axis=1, inplace=True)
         fig, axes = plt.subplots(7, 5, figsize=(15, 15))
@@ -202,11 +209,8 @@ class Plotter:
         fig.tight_layout()
         plt.show()
 
-    def plot_unit_per_step_feature(self,
-                                   df,
-                                   unit=89,
-                                   step=23,
-                                   feature='M1 SPEED'):
+    @staticmethod
+    def plot_unit_per_step_feature(df, unit=89, step=23, feature='M1 SPEED'):
         fig = go.Figure()
         for test in df[(df['UNIT'] == unit)
                        & (df['STEP'] == step)]['TEST'].unique():
@@ -224,7 +228,8 @@ class Plotter:
         )
         fig.show()
 
-    def plot_unit_per_feature(self, df, unit=89, feature='M1 SPEED'):
+    @staticmethod
+    def plot_unit_per_feature(df, unit=89, feature='M1 SPEED'):
         fig = go.Figure()
         for test in df[(df['UNIT'] == unit)]['TEST'].unique():
             fig.add_trace(
@@ -240,7 +245,8 @@ class Plotter:
         )
         fig.show()
 
-    def plot_anomalies_per_unit_feature(self, df, unit=89, feature='PT4'):
+    @staticmethod
+    def plot_anomalies_per_unit_feature(df, unit=89, feature='PT4'):
         try:
             for test in df[(df['UNIT'] == unit)]['TEST'].unique():
                 if any(df[(df['UNIT'] == unit)
@@ -285,19 +291,17 @@ if __name__ == '__main__':
 
     os.chdir('../../..')
     os.getcwd()
-    data_reader = DataReader()
-    data = data_reader.load_data()
-    plotter = Plotter()
-    plotter.plot_unit_raw_data(data, unit=91, in_time=False, save=False)
-    plotter.plot_unit_from_summary_file(unit_id='HYD000091-R1')
-    plotter.plot_covariance(data)
-    plotter.plot_all_per_step_feature(data, single_plot=False)
-    plotter.plot_all_per_step(data, step=18)
-    plotter.plot_all_means_per_step(data, step=18)
-    plotter.plot_kdes_per_step(data, step=18)
-    plotter.plot_unit_per_step_feature(data,
+    data = DataReader.load_data()
+    Plotter.plot_unit_raw_data(data, unit=91, in_time=False, save=False)
+    Plotter.plot_unit_from_summary_file(unit_id='HYD000091-R1')
+    Plotter.plot_covariance(data)
+    Plotter.plot_all_per_step_feature(data, single_plot=False)
+    Plotter.plot_all_per_step(data, step=18)
+    Plotter.plot_all_means_per_step(data, step=18)
+    Plotter.plot_kdes_per_step(data, step=18)
+    Plotter.plot_unit_per_step_feature(data,
                                        unit=91,
                                        step=23,
                                        feature='M4 ANGLE')
-    plotter.plot_unit_per_feature(data, unit=91, feature='M4 ANGLE')
-    plotter.plot_anomalies_per_unit_feature(data, unit=91, feature='PT4')
+    Plotter.plot_unit_per_feature(data, unit=91, feature='M4 ANGLE')
+    Plotter.plot_anomalies_per_unit_feature(data, unit=91, feature='PT4')

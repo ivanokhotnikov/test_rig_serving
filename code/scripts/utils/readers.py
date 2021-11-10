@@ -2,11 +2,12 @@ import os
 import numpy as np
 import pandas as pd
 
-from config import DATA_PATH, FEATURES, FEATURES_NO_TIME
+from config import DATA_PATH, MODELS_PATH, FEATURES, FEATURES_NO_TIME
 
 
 class DataReader:
-    def read_all_raw_data(self, verbose=True):
+    @staticmethod
+    def read_all_raw_data(verbose=True):
         final_df = pd.DataFrame()
         units = []
         for file in os.listdir(os.path.join(DATA_PATH, 'raw')):
@@ -37,6 +38,7 @@ class DataReader:
                 errors='coerce',
                 downcast='float',
             )
+            current_df = current_df.dropna(axis=0)
             name_list = file.split('-')
             try:
                 unit = np.uint8(name_list[0][-2:])
@@ -44,17 +46,15 @@ class DataReader:
                 unit = np.uint8(name_list[0].split('_')[0][-2:])
             units.append(unit)
             current_df['ARMANI'] = 1 if name_list[0][3] == '2' else 0
+            current_df['ARMANI'] = current_df['ARMANI'].astype(np.uint8)
             current_df['UNIT'] = unit
             current_df['TEST'] = np.uint8(units.count(unit))
-            current_df['STEP'] = current_df['STEP'].astype(
-                np.uint8,
-                errors='ignore',
-            )
-            current_df = current_df.dropna(axis=0)
+            current_df['STEP'] = current_df['STEP'].astype(np.uint8)
             final_df = pd.concat((final_df, current_df), ignore_index=True)
         return final_df
 
-    def read_raw_unit_data(self, unit_id='HYD000091-R1_RAW'):
+    @staticmethod
+    def read_raw_unit_data(unit_id='HYD000091-R1_RAW'):
         try:
             unit_df = pd.read_csv(os.path.join(DATA_PATH, 'raw',
                                                unit_id + '.csv'),
@@ -78,7 +78,8 @@ class DataReader:
         unit_df = unit_df.dropna(axis=0)
         return unit_df
 
-    def read_combined_data(self, verbose=True):
+    @staticmethod
+    def read_combined_data(verbose=True):
         try:
             if verbose:
                 print('Reading "combined_data.csv"')
@@ -103,8 +104,11 @@ class DataReader:
             print('No "combined_data.csv" found in the "data" directory')
             return None
 
-    def read_summary_file(self, verbose=True):
+    @staticmethod
+    def read_summary_file(verbose=True):
         try:
+            if verbose:
+                print(f'Reading the summsry file.')
             xl = pd.ExcelFile(
                 os.path.join(DATA_PATH, 'processed',
                              'report template-V4.xlsx'))
@@ -121,17 +125,18 @@ class DataReader:
             print('No "report template-V4.xlsx" found')
             return None
 
-    def load_data(self, read_all=True, raw=False, unit=None, verbose=True):
+    @classmethod
+    def load_data(cls, read_all=True, raw=False, unit=None, verbose=True):
         if read_all:
             if raw:
-                return self.read_all_raw_data(verbose=verbose)
+                return cls.read_all_raw_data(verbose=verbose)
             else:
-                return self.read_combined_data(verbose=verbose)
+                return cls.read_combined_data(verbose=verbose)
         else:
             if raw:
-                return self.read_raw_unit_data(unit_id=unit)
+                return cls.read_raw_unit_data(unit_id=unit)
             else:
-                return pd.DataFrame(self.read_summary_file())
+                return pd.DataFrame(cls.read_summary_file())
 
 
 class ModelReader:
@@ -139,35 +144,39 @@ class ModelReader:
 
 
 class Preprocessor:
-    def remove_outliers(self, df, zscore=3):
+    @staticmethod
+    def remove_outliers(df, zscore=3):
         from scipy import stats
         return df[(np.abs(stats.zscore(df[FEATURES_NO_TIME])) < zscore).all(
             axis=1)]
 
-    def remove_step_zero(self, df):
+    @staticmethod
+    def remove_step_zero(df):
         return df.drop(df[df['STEP'] == 0].index, axis=0)
 
-    def get_warm_up_steps(self, df):
+    @staticmethod
+    def get_warm_up_steps(df):
         return df[(df['STEP'] >= 1) & (df['STEP'] <= 11)]
 
-    def get_break_in_steps(self, df):
+    @staticmethod
+    def get_break_in_steps(df):
         return df[(df['STEP'] >= 12) & (df['STEP'] <= 22)]
 
-    def get_performance_check_steps(self, df):
+    @staticmethod
+    def get_performance_check_steps(df):
         return df[(df['STEP'] >= 23) & (df['STEP'] <= 33)]
 
 
 if __name__ == '__main__':
     os.chdir('../../..')
     os.getcwd()
-    data_reader = DataReader()
-    all_raw_data = data_reader.read_all_raw_data(verbose=True)
-    all_combined_data = data_reader.read_combined_data(verbose=True)
-    summary = data_reader.read_summary_file(verbose=True)
-    combined_data = data_reader.load_data(raw=False)
-    preprocessor = Preprocessor()
-    wo_outliers = preprocessor.remove_outliers(combined_data, zscore=3)
-    wo_step_zero = preprocessor.remove_step_zero(combined_data)
-    warm_up = preprocessor.get_warm_up_steps(combined_data)
-    break_in = preprocessor.get_break_in_steps(combined_data)
-    performance_check = preprocessor.get_performance_check_steps(combined_data)
+    all_raw_data = DataReader.read_all_raw_data(verbose=True)
+    all_raw_data['STEP'].unique()
+    all_combined_data = DataReader.read_combined_data(verbose=True)
+    summary = DataReader.read_summary_file(verbose=True)
+    combined_data = DataReader.load_data(raw=False)
+    wo_outliers = Preprocessor.remove_outliers(combined_data, zscore=3)
+    wo_step_zero = Preprocessor.remove_step_zero(combined_data)
+    warm_up = Preprocessor.get_warm_up_steps(combined_data)
+    break_in = Preprocessor.get_break_in_steps(combined_data)
+    performance_check = Preprocessor.get_performance_check_steps(combined_data)
