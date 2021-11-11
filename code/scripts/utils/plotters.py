@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from config import IMAGES_PATH, FEATURES_NO_TIME, FEATURES_NO_TIME_AND_COMMANDS
+from .config import IMAGES_PATH, FEATURES_NO_TIME, FEATURES_NO_TIME_AND_COMMANDS
 
 
 class Plotter:
@@ -50,7 +50,7 @@ class Plotter:
         from readers import DataReader
 
         reader = DataReader()
-        units = reader.read_summary_file()
+        units = reader.read_summary_data()
         unit = units[unit_id]
         cols = unit.columns.to_list()
         num_cols = [
@@ -101,7 +101,7 @@ class Plotter:
     @staticmethod
     def plot_all_per_step_feature(df,
                                   step=18,
-                                  feature='PT4',
+                                  feature='M4 ANGLE',
                                   single_plot=True):
         if single_plot:
             fig = go.Figure()
@@ -210,7 +210,7 @@ class Plotter:
         plt.show()
 
     @staticmethod
-    def plot_unit_per_step_feature(df, unit=89, step=23, feature='M1 SPEED'):
+    def plot_unit_per_step_feature(df, unit=89, step=23, feature='M4 ANGLE'):
         fig = go.Figure()
         for test in df[(df['UNIT'] == unit)
                        & (df['STEP'] == step)]['TEST'].unique():
@@ -229,7 +229,7 @@ class Plotter:
         fig.show()
 
     @staticmethod
-    def plot_unit_per_feature(df, unit=89, feature='M1 SPEED'):
+    def plot_unit_per_feature(df, unit=89, feature='M4 ANGLE'):
         fig = go.Figure()
         for test in df[(df['UNIT'] == unit)]['TEST'].unique():
             fig.add_trace(
@@ -246,44 +246,72 @@ class Plotter:
         fig.show()
 
     @staticmethod
+    def plot_unit_per_test_feature(df, unit=89, test=1, feature='M4 ANGLE'):
+        fig = go.Figure()
+        fig.add_trace(
+            go.Scatter(x=df[(df['UNIT'] == unit)
+                            & (df['TEST'] == test)]['TIME'],
+                       y=df[(df['UNIT'] == unit)
+                            & (df['TEST'] == test)][feature],
+                       name=f'{unit}-{test}'))
+        fig.update_layout(
+            template='none',
+            title=f'{feature}',
+            xaxis_title='TIME',
+            yaxis_title=feature,
+            showlegend=True,
+        )
+        fig.show()
+
+    @staticmethod
     def plot_anomalies_per_unit_feature(df, unit=89, feature='PT4'):
         try:
             for test in df[(df['UNIT'] == unit)]['TEST'].unique():
-                if any(df[(df['UNIT'] == unit)
-                          & (df['TEST'] == test)]['ANOMALY'] == -1):
-                    fig = go.Figure()
-                    fig.add_scatter(
-                        x=df[(df['UNIT'] == unit)
-                             & (df['TEST'] == test)]['TIME'],
-                        y=df[(df['UNIT'] == unit)
-                             & (df['TEST'] == test)][feature],
-                        mode='lines',
-                        name='Inlier',
-                        line={
-                            'color': 'steelblue',
-                        },
-                    )
-                    fig.add_scatter(
-                        x=df[(df['UNIT'] == unit) & (df['TEST'] == test) &
-                             (df['ANOMALY'] == -1)]['TIME'],
-                        y=df[(df['UNIT'] == unit) & (df['TEST'] == test) &
-                             (df['ANOMALY'] == -1)][feature],
-                        mode='markers',
-                        name='Outlier',
-                        line={
-                            'color': 'indianred',
-                        },
-                    )
-                    fig.update_layout(
-                        yaxis={'title': feature},
-                        template='none',
-                        title=f'Unit {unit}-{test}',
-                    )
-                    fig.show()
-                else:
-                    print(f'No anomalies found in {unit}-{test} test')
+                Plotter.plot_anomalies_per_unit_test_feature(df,
+                                                             unit=unit,
+                                                             test=test,
+                                                             feature=feature)
         except KeyError:
             print(f'No "ANOMALY" columns found in the dataset.')
+
+    @staticmethod
+    def plot_anomalies_per_unit_test_feature(df,
+                                             unit=89,
+                                             test=1,
+                                             feature='M4 ANGLE'):
+        if any(df[(df['UNIT'] == unit)
+                  & (df['TEST'] == test)]['ANOMALY'] == -1):
+            fig = go.Figure()
+            fig.add_scatter(
+                x=df[(df['UNIT'] == unit)
+                     & (df['TEST'] == test)]['TIME'],
+                y=df[(df['UNIT'] == unit)
+                     & (df['TEST'] == test)][feature],
+                mode='lines',
+                name='Inlier',
+                line={
+                    'color': 'steelblue',
+                },
+            )
+            fig.add_scatter(
+                x=df[(df['UNIT'] == unit) & (df['TEST'] == test) &
+                     (df['ANOMALY'] == -1)]['TIME'],
+                y=df[(df['UNIT'] == unit) & (df['TEST'] == test) &
+                     (df['ANOMALY'] == -1)][feature],
+                mode='markers',
+                name='Outlier',
+                line={
+                    'color': 'indianred',
+                },
+            )
+            fig.update_layout(
+                yaxis={'title': feature},
+                template='none',
+                title=f'Unit {unit}-{test}',
+            )
+            fig.show()
+        else:
+            print(f'No anomalies found in {unit}-{test} test.')
 
 
 if __name__ == '__main__':
@@ -304,4 +332,4 @@ if __name__ == '__main__':
                                        step=23,
                                        feature='M4 ANGLE')
     Plotter.plot_unit_per_feature(data, unit=91, feature='M4 ANGLE')
-    Plotter.plot_anomalies_per_unit_feature(data, unit=91, feature='PT4')
+    Plotter.plot_anomalies_per_unit_feature(data, unit=91, feature='M4 ANGLE')
