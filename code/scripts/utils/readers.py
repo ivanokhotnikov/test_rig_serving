@@ -2,7 +2,8 @@ import os
 import numpy as np
 import pandas as pd
 
-from config import DATA_PATH, MODELS_PATH, FEATURES, FEATURES_NO_TIME
+from .config import DATA_PATH, MODELS_PATH, FEATURES, FEATURES_NO_TIME
+from joblib import load
 
 
 class DataReader:
@@ -54,22 +55,22 @@ class DataReader:
         return final_df
 
     @staticmethod
-    def read_raw_unit_data(unit_id='HYD000091-R1_RAW'):
+    def read_raw_unit_data(unit='HYD000091-R1_RAW'):
         try:
             unit_df = pd.read_csv(os.path.join(DATA_PATH, 'raw',
-                                               unit_id + '.csv'),
+                                               unit + '.csv'),
                                   usecols=FEATURES,
                                   index_col=False,
                                   header=0)
         except:
             try:
                 unit_df = pd.read_excel(os.path.join(DATA_PATH, 'raw',
-                                                     unit_id + '.xlsx'),
+                                                     unit + '.xlsx'),
                                         usecols=FEATURES,
                                         index_col=False,
                                         header=0)
             except:
-                print(f'No {unit_id} file found')
+                print(f'No {unit} file found')
                 return None
         unit_df[FEATURES_NO_TIME] = unit_df[FEATURES_NO_TIME].apply(
             pd.to_numeric, errors='coerce')
@@ -105,7 +106,7 @@ class DataReader:
             return None
 
     @staticmethod
-    def read_summary_file(verbose=True):
+    def read_summary_data(verbose=True):
         try:
             if verbose:
                 print(f'Reading the summsry file.')
@@ -134,13 +135,9 @@ class DataReader:
                 return cls.read_combined_data(verbose=verbose)
         else:
             if raw:
-                return cls.read_raw_unit_data(unit_id=unit)
+                return cls.read_raw_unit_data(unit=unit)
             else:
-                return pd.DataFrame(cls.read_summary_file())
-
-
-class ModelReader:
-    pass
+                return pd.DataFrame(cls.read_summary_data())
 
 
 class Preprocessor:
@@ -167,16 +164,23 @@ class Preprocessor:
         return df[(df['STEP'] >= 23) & (df['STEP'] <= 33)]
 
 
+class ModelReader:
+    @staticmethod
+    def read_model(model, extension='joblib'):
+        return load(os.path.join(MODELS_PATH, f'{model}' + '.' + extension))
+
+
 if __name__ == '__main__':
     os.chdir('../../..')
     os.getcwd()
     all_raw_data = DataReader.read_all_raw_data(verbose=True)
     all_raw_data['STEP'].unique()
     all_combined_data = DataReader.read_combined_data(verbose=True)
-    summary = DataReader.read_summary_file(verbose=True)
+    summary = DataReader.read_summary_data(verbose=True)
     combined_data = DataReader.load_data(raw=False)
     wo_outliers = Preprocessor.remove_outliers(combined_data, zscore=3)
     wo_step_zero = Preprocessor.remove_step_zero(combined_data)
     warm_up = Preprocessor.get_warm_up_steps(combined_data)
     break_in = Preprocessor.get_break_in_steps(combined_data)
     performance_check = Preprocessor.get_performance_check_steps(combined_data)
+    model = ModelReader.read_model('isolation_forest')
