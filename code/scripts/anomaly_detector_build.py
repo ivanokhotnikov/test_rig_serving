@@ -14,7 +14,7 @@ if __name__ == '__main__':
     print(os.getcwd())
     os.chdir('..\\..')
     print(os.getcwd())
-    df = DataReader.load_data(raw=True)
+    df = DataReader.load_data(raw=False)
     df = Preprocessor.remove_step_zero(df)
     train = False
     if train:
@@ -40,6 +40,9 @@ if __name__ == '__main__':
     most_anomalous_units = anomlaies_per_unit.index[:5]
     for unit in most_anomalous_units:
         Plotter.plot_anomalies_per_unit_feature(df, unit=unit, feature='PT4')
-    Plotter.plot_unit_per_feature(df,
-                                  unit=random.choice(normal_units),
-                                  feature='PT4')
+    normal_unit = random.choice(normal_units)
+    for feature in FEATURES_NO_TIME_AND_COMMANDS:
+        Plotter.plot_anomalies_per_unit_feature(df,
+                                                unit=most_anomalous_units[0],
+                                                feature=feature)
+        Plotter.plot_unit_per_feature(df, unit=normal_unit, feature=feature)
