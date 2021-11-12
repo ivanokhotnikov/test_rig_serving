@@ -21,31 +21,6 @@ class Plotter:
         plt.savefig(path, format=fig_extension, dpi=resolution)
 
     @staticmethod
-    def plot_unit_raw_data(df, unit=89, in_time=False, save=False):
-        fig = make_subplots(rows=len(FEATURES_NO_TIME),
-                            cols=1,
-                            subplot_titles=FEATURES_NO_TIME)
-        for i, feature in enumerate(FEATURES_NO_TIME, start=1):
-            for test in df[df['UNIT'] == unit]['TEST'].unique():
-                fig.append_trace(
-                    go.Scatter(
-                        x=df[(df['UNIT'] == unit)
-                             & (df['TEST'] == test)]['TIME']
-                        if in_time else None,
-                        y=df[(df['UNIT'] == unit)
-                             & (df['TEST'] == test)][feature],
-                        name=f'{unit}-{test}',
-                    ),
-                    row=i,
-                    col=1,
-                )
-        fig.update_layout(template='none', height=8000, showlegend=False)
-        if save:
-            fig.write_image(
-                os.path.join(IMAGES_PATH, f'unit_{unit}' + '.' + 'png'))
-        fig.show()
-
-    @staticmethod
     def plot_unit_from_summary_file(unit_id='HYD000091-R1'):
         from readers import DataReader
 
@@ -70,6 +45,80 @@ class Plotter:
                           height=8000,
                           title=f'{unit_id}',
                           showlegend=False)
+        fig.show()
+
+    @staticmethod
+    def plot_unit(df, unit=89, save=False):
+        # TODO see plot_anomalies_per_unit
+        for feature in FEATURES_NO_TIME_AND_COMMANDS:
+            fig = go.Figure()
+            for test in df[df['UNIT'] == unit]['TEST'].unique():
+                fig.add_scatter(
+                    x=df[(df['UNIT'] == unit)
+                         & (df['TEST'] == test)]['TIME'],
+                    y=df[(df['UNIT'] == unit)
+                         & (df['TEST'] == test)][feature],
+                    name=f'{unit}-{test}',
+                )
+            fig.update_layout(
+                template='none',
+                title=f'{feature}',
+                xaxis_title='TIME',
+                yaxis_title=feature,
+                showlegend=True,
+            )
+            if save:
+                fig.write_image(
+                    os.path.join(IMAGES_PATH, f'{feature}_unit_{unit}' + '.png'))
+            fig.show()
+
+    @staticmethod
+    def plot_unit_per_feature(df, unit=89, feature='M4 ANGLE'):
+        for test in df[(df['UNIT'] == unit)]['TEST'].unique():
+            Plotter.plot_unit_per_test_feature(df,
+                                               unit=unit,
+                                               test=test,
+                                               feature=feature)
+
+    @staticmethod
+    def plot_unit_per_test_feature(df, unit=89, test=1, feature='M4 ANGLE'):
+        fig = go.Figure()
+        fig.add_scatter(x=df[(df['UNIT'] == unit)
+                             & (df['TEST'] == test)]['TIME'],
+                        y=df[(df['UNIT'] == unit)
+                             & (df['TEST'] == test)][feature],
+                        name=f'{unit}-{test}')
+        fig.update_layout(
+            template='none',
+            title=f'{feature}',
+            xaxis_title='TIME',
+            yaxis_title=feature,
+            showlegend=True,
+        )
+        fig.show()
+
+    @staticmethod
+    def plot_unit_per_test_step_feature(df,
+                                        unit=89,
+                                        test=1,
+                                        step=23,
+                                        feature='M4 ANGLE'):
+        fig = go.Figure()
+        fig.add_trace(
+            go.Scatter(x=df[(df['UNIT'] == unit)
+                            & (df['STEP'] == step)
+                            & (df['TEST'] == test)]['TIME'],
+                       y=df[(df['UNIT'] == unit)
+                            & (df['STEP'] == step)
+                            & (df['TEST'] == test)][feature],
+                       name=f'{unit}-{test}'))
+        fig.update_layout(
+            template='none',
+            title=f'Step {step}, {feature}',
+            xaxis_title='TIME',
+            yaxis_title=feature,
+            showlegend=True,
+        )
         fig.show()
 
     @staticmethod
@@ -210,58 +259,14 @@ class Plotter:
         plt.show()
 
     @staticmethod
-    def plot_unit_per_step_feature(df, unit=89, step=23, feature='M4 ANGLE'):
-        fig = go.Figure()
-        for test in df[(df['UNIT'] == unit)
-                       & (df['STEP'] == step)]['TEST'].unique():
-            fig.add_trace(
-                go.Scatter(y=df[(df['UNIT'] == unit)
-                                & (df['STEP'] == step)
-                                & (df['TEST'] == test)][feature],
-                           name=f'{unit}-{test}'))
-        fig.update_layout(
-            template='none',
-            title=f'Step {step}, {feature}',
-            xaxis_title='TIME IN STEP',
-            yaxis_title=feature,
-            showlegend=True,
-        )
-        fig.show()
-
-    @staticmethod
-    def plot_unit_per_feature(df, unit=89, feature='M4 ANGLE'):
-        fig = go.Figure()
-        for test in df[(df['UNIT'] == unit)]['TEST'].unique():
-            fig.add_trace(
-                go.Scatter(y=df[(df['UNIT'] == unit)
-                                & (df['TEST'] == test)][feature],
-                           name=f'{unit}-{test}'))
-        fig.update_layout(
-            template='none',
-            title=f'{feature}',
-            xaxis_title='TIME',
-            yaxis_title=feature,
-            showlegend=True,
-        )
-        fig.show()
-
-    @staticmethod
-    def plot_unit_per_test_feature(df, unit=89, test=1, feature='M4 ANGLE'):
-        fig = go.Figure()
-        fig.add_trace(
-            go.Scatter(x=df[(df['UNIT'] == unit)
-                            & (df['TEST'] == test)]['TIME'],
-                       y=df[(df['UNIT'] == unit)
-                            & (df['TEST'] == test)][feature],
-                       name=f'{unit}-{test}'))
-        fig.update_layout(
-            template='none',
-            title=f'{feature}',
-            xaxis_title='TIME',
-            yaxis_title=feature,
-            showlegend=True,
-        )
-        fig.show()
+    def plot_anomalies_per_unit(df, unit=89):
+        if 'ANOMALY' in df.columns:
+            for test in df[(df['UNIT'] == unit)]['TEST'].unique():
+                for feature in FEATURES_NO_TIME_AND_COMMANDS:
+                    Plotter.plot_anomalies_per_unit_test_feature(
+                        df, unit=unit, test=test, feature=feature)
+        else:
+            print(f'No anomalies column in data')
 
     @staticmethod
     def plot_anomalies_per_unit_feature(df, unit=89, feature='PT4'):
