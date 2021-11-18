@@ -25,9 +25,13 @@ if __name__ == '__main__':
                                   random_state=SEED,
                                   verbose=VERBOSITY,
                                   n_jobs=-1)
+        print(f'Fitting started')
         iforest_predict = iforest.fit_predict(
             df[FEATURES_NO_TIME_AND_COMMANDS])
+        print(f'Fitting finished')
+        print(f'Saving the model')
         dump(iforest, os.path.join(MODELS_PATH, 'iforest.joblib'))
+        print(f'Saving finished')
         df['ANOMALY'] = pd.Series(iforest_predict).astype(np.int8)
     else:
         df['ANOMALY'] = pd.read_csv(
