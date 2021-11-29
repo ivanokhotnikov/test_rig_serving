@@ -1,5 +1,6 @@
 import os
 import random
+import datetime
 import numpy as np
 import pandas as pd
 from joblib import dump, load
@@ -16,7 +17,7 @@ if __name__ == '__main__':
     print(os.getcwd())
     df = DataReader.load_data(raw=False)
     df = Preprocessor.remove_step_zero(df)
-    train = False
+    train = True
     if train:
         iforest = IsolationForest(n_estimators=10000,
                                   contamination=0.01,
@@ -30,7 +31,11 @@ if __name__ == '__main__':
             df[FEATURES_NO_TIME_AND_COMMANDS])
         print(f'Fitting finished')
         print(f'Saving the model')
-        dump(iforest, os.path.join(MODELS_PATH, 'iforest.joblib'))
+        dump(
+            iforest,
+            os.path.join(
+                MODELS_PATH,
+                f'iforest_{datetime.datetime.now():%d%m_%I%M}.joblib'))
         print(f'Saving finished')
         df['ANOMALY'] = pd.Series(iforest_predict).astype(np.int8)
     else:
@@ -40,10 +45,10 @@ if __name__ == '__main__':
     normal_units = [
         unit for unit in df['UNIT'].unique() if unit not in anomalous_units
     ]
-    anomlaies_per_unit = df[df['ANOMALY'] == -1]['UNIT'].value_counts()
-    most_anomalous_units = anomlaies_per_unit.index[:5]
+    anomalies_per_unit = df[df['ANOMALY'] == -1]['UNIT'].value_counts()
+    most_anomalous_units = anomalies_per_unit.index[:5]
     for unit in most_anomalous_units:
-        Plotter.plot_anomalies_per_unit_feature(df, unit=unit, feature='PT4')
+        Plotter.plot_anomalies_per_unit_feature(df, unit=unit, feature='M4 ANGLE')
     normal_unit = random.choice(normal_units)
     for feature in FEATURES_NO_TIME_AND_COMMANDS:
         Plotter.plot_anomalies_per_unit_feature(df,
