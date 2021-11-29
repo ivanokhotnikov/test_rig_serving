@@ -35,7 +35,7 @@ if __name__ == '__main__':
             iforest,
             os.path.join(
                 MODELS_PATH,
-                f'iforest_{datetime.datetime.now():%d%m_%I%M}.joblib'))
+                f'iforest_{datetime.datetime.now():%d%m_%H%M}.joblib'))
         print(f'Saving finished')
         df['ANOMALY'] = pd.Series(iforest_predict).astype(np.int8)
     else:
@@ -48,7 +48,9 @@ if __name__ == '__main__':
     anomalies_per_unit = df[df['ANOMALY'] == -1]['UNIT'].value_counts()
     most_anomalous_units = anomalies_per_unit.index[:5]
     for unit in most_anomalous_units:
-        Plotter.plot_anomalies_per_unit_feature(df, unit=unit, feature='M4 ANGLE')
+        Plotter.plot_anomalies_per_unit_feature(df,
+                                                unit=unit,
+                                                feature='M4 ANGLE')
     normal_unit = random.choice(normal_units)
     for feature in FEATURES_NO_TIME_AND_COMMANDS:
         Plotter.plot_anomalies_per_unit_feature(df,
