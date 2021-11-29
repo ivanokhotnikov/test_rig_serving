@@ -46,7 +46,7 @@ def cv(df, clf_name, params, features, target):
     model.save_model(
         os.path.join(
             os.getcwd(), MODELS_PATH,
-            f'{clf_name}_{val_score:.4f}_{test_score:.4f}_{datetime.datetime.now():%d%m_%I%M}.json'
+            f'{clf_name}_{val_score:.4f}_{test_score:.4f}_{datetime.datetime.now():%d%m_%H%M}.json'
         ))
 
 
