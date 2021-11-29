@@ -6,10 +6,6 @@ from utils.plotters import Plotter
 from joblib import dump, load
 
 
-def main():
-    pass
-
-
 if __name__ == '__main__':
     os.chdir('..\\..')
-    clf = load('outputs\\models\\isolation_forest.joblib')
+    dtc = load('outputs\\models\\iforest_2911_0359.joblib')
