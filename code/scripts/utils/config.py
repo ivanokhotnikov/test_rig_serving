@@ -3,6 +3,7 @@ import os
 PROJECT_DIR = '.'
 IMAGES_PATH = os.path.join(PROJECT_DIR, 'outputs', 'images')
 MODELS_PATH = os.path.join(PROJECT_DIR, 'outputs', 'models')
+PREDICTIONS_PATH = os.path.join(PROJECT_DIR, 'outputs', 'predictions')
 DATA_PATH = os.path.join(PROJECT_DIR, 'data')
 
 FEATURES = [

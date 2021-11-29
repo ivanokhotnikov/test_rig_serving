@@ -42,9 +42,9 @@ class DataReader:
             current_df = current_df.dropna(axis=0)
             name_list = file.split('-')
             try:
-                unit = np.uint8(name_list[0][-2:])
+                unit = np.uint8(name_list[0][-3:].lstrip('0D'))
             except ValueError:
-                unit = np.uint8(name_list[0].split('_')[0][-2:])
+                unit = np.uint8(name_list[0].split('_')[0][-3:].lstrip('0D'))
             units.append(unit)
             current_df['ARMANI'] = 1 if name_list[0][3] == '2' else 0
             current_df['ARMANI'] = current_df['ARMANI'].astype(np.uint8)
@@ -52,6 +52,7 @@ class DataReader:
             current_df['TEST'] = np.uint8(units.count(unit))
             current_df['STEP'] = current_df['STEP'].astype(np.uint8)
             final_df = pd.concat((final_df, current_df), ignore_index=True)
+        if verbose: print('Reading done!')
         return final_df
 
     @staticmethod
