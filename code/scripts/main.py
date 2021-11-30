@@ -1,5 +1,5 @@
 import os
-from utils.config import MODELS_PATH, IMAGES_PATH
+from utils.config import MODELS_PATH, IMAGES_PATH, PREDICTIONS_PATH
 from utils.readers import DataReader, Preprocessor, ModelReader
 from utils.plotters import Plotter
 
