@@ -5,6 +5,7 @@ code/scripts/__pycache__*
 code/notebooks/*
 data/*
 outputs/*
+venv/*
 *.ipynb
 *.csv
 *.xlsx
