@@ -85,7 +85,7 @@ class DataReader:
         try:
             if verbose:
                 print('Reading "combined_data.csv"')
-            df = pd.read_csv(os.path.join(os.getcwd(), DATA_PATH, 'processed',
+            df = pd.read_csv(os.path.join(DATA_PATH, 'processed',
                                           'combined_data.csv'),
                              usecols=FEATURES.append('UNIT'),
                              index_col=False)
@@ -139,6 +139,29 @@ class DataReader:
                 return cls.read_raw_unit_data(unit=unit)
             else:
                 return pd.DataFrame(cls.read_summary_data())
+
+    @staticmethod
+    def read_newcoming_data(csv_file):
+        df = pd.read_csv(csv_file,
+                         usecols=FEATURES,
+                         on_bad_lines='skip',
+                         index_col=False,
+                         header=0)
+        df[FEATURES_NO_TIME] = df[FEATURES_NO_TIME].apply(
+            pd.to_numeric,
+            errors='coerce',
+            downcast='float',
+        )
+        df = df.dropna(axis=0)
+        name_list = csv_file.name.split('-')
+        try:
+            unit = np.uint8(name_list[0][-3:].lstrip('0D'))
+        except ValueError:
+            unit = np.uint8(name_list[0].split('_')[0][-3:].lstrip('0D'))
+        df['UNIT'] = unit
+        df['STEP'] = df['STEP'].astype(np.uint8)
+        df['TEST'] = np.uint8(1)
+        return df
 
 
 class Preprocessor:
