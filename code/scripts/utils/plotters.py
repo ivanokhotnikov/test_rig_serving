@@ -48,8 +48,7 @@ class Plotter:
         fig.show()
 
     @staticmethod
-    def plot_unit(df, unit=89, save=False):
-        # TODO see plot_anomalies_per_unit
+    def plot_unit(df, unit=89, save=False, show=True):
         for feature in FEATURES_NO_TIME_AND_COMMANDS:
             fig = go.Figure()
             for test in df[df['UNIT'] == unit]['TEST'].unique():
@@ -69,19 +68,31 @@ class Plotter:
             )
             if save:
                 fig.write_image(
-                    os.path.join(IMAGES_PATH, f'{feature}_unit_{unit}' + '.png'))
-            fig.show()
+                    os.path.join(IMAGES_PATH,
+                                 f'{feature}_unit_{unit}' + '.png'))
+            if show: fig.show()
 
     @staticmethod
-    def plot_unit_per_feature(df, unit=89, feature='M4 ANGLE'):
+    def plot_unit_per_feature(df,
+                              unit=89,
+                              feature='M4 ANGLE',
+                              save=False,
+                              show=True):
         for test in df[(df['UNIT'] == unit)]['TEST'].unique():
             Plotter.plot_unit_per_test_feature(df,
                                                unit=unit,
                                                test=test,
-                                               feature=feature)
+                                               feature=feature,
+                                               save=save,
+                                               show=show)
 
     @staticmethod
-    def plot_unit_per_test_feature(df, unit=89, test=1, feature='M4 ANGLE'):
+    def plot_unit_per_test_feature(df,
+                                   unit=89,
+                                   test=1,
+                                   feature='M4 ANGLE',
+                                   save=False,
+                                   show=True):
         fig = go.Figure()
         fig.add_scatter(x=df[(df['UNIT'] == unit)
                              & (df['TEST'] == test)]['TIME'],
@@ -95,14 +106,23 @@ class Plotter:
             yaxis_title=feature,
             showlegend=True,
         )
-        fig.show()
+        if save:
+            fig.write_image(
+                os.path.join(IMAGES_PATH,
+                             f'{feature}_unit_{unit}-{test}' + '.png'))
+        if show:
+            fig.show()
+            return None
+        return fig
 
     @staticmethod
     def plot_unit_per_test_step_feature(df,
                                         unit=89,
                                         test=1,
                                         step=23,
-                                        feature='M4 ANGLE'):
+                                        feature='M4 ANGLE',
+                                        save=False,
+                                        show=True):
         fig = go.Figure()
         fig.add_trace(
             go.Scatter(x=df[(df['UNIT'] == unit)
@@ -119,7 +139,14 @@ class Plotter:
             yaxis_title=feature,
             showlegend=True,
         )
-        fig.show()
+        if save:
+            fig.write_image(
+                os.path.join(IMAGES_PATH,
+                             f'{feature}_unit_{unit}-{test}-{step}' + '.png'))
+        if show:
+            fig.show()
+            return None
+        return fig
 
     @staticmethod
     def plot_covariance(cls, df, save=False):
