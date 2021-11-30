@@ -40,7 +40,7 @@ if __name__ == '__main__':
         df['ANOMALY'] = pd.Series(iforest_predict).astype(np.int8)
     else:
         df['ANOMALY'] = pd.read_csv(
-            os.path.join('outputs', 'predictions', 'iforest.csv'))
+            os.path.join('outputs', 'predictions', 'iforest_2911_2247.csv'))
     anomalous_units = df[df['ANOMALY'] == -1]['UNIT'].unique()
     normal_units = [
         unit for unit in df['UNIT'].unique() if unit not in anomalous_units
