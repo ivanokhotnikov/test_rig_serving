@@ -9,4 +9,3 @@ venv/*
 *.ipynb
 *.csv
 *.xlsx
-*.txt
