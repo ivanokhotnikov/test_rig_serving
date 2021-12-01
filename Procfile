@@ -1,0 +1,1 @@
+web: sh setup.sh && streamlit run code/scripts/anomaly_detector.py
