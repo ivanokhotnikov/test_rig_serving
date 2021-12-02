@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+import streamlit as st
 
 from .config import DATA_PATH, MODELS_PATH, FEATURES, FEATURES_NO_TIME
 from joblib import load
@@ -141,6 +142,7 @@ class DataReader:
                 return pd.DataFrame(cls.read_summary_data())
 
     @staticmethod
+    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def read_newcoming_data(csv_file):
         df = pd.read_csv(csv_file,
                          usecols=FEATURES,
@@ -172,6 +174,7 @@ class Preprocessor:
             axis=1)]
 
     @staticmethod
+    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def remove_step_zero(df):
         return df.drop(df[df['STEP'] == 0].index, axis=0)
 
@@ -190,6 +193,7 @@ class Preprocessor:
 
 class ModelReader:
     @staticmethod
+    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def read_model(model, extension='joblib'):
         return load(os.path.join(MODELS_PATH, f'{model}' + '.' + extension))
 

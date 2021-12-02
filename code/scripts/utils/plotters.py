@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import seaborn as sns
+import streamlit as st
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -46,8 +47,9 @@ class Plotter:
                           title=f'{unit_id}',
                           showlegend=False)
         fig.show()
-
+    
     @staticmethod
+    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def plot_unit(df, unit=89, save=False, show=True):
         for feature in FEATURES_NO_TIME_AND_COMMANDS:
             fig = go.Figure()
@@ -73,6 +75,7 @@ class Plotter:
             if show: fig.show()
 
     @staticmethod
+    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def plot_unit_per_feature(df,
                               unit=89,
                               feature='M4 ANGLE',
@@ -87,6 +90,7 @@ class Plotter:
                                                show=show)
 
     @staticmethod
+    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def plot_unit_per_test_feature(df,
                                    unit=89,
                                    test=1,
@@ -116,6 +120,7 @@ class Plotter:
         return fig
 
     @staticmethod
+    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def plot_unit_per_test_step_feature(df,
                                         unit=89,
                                         test=1,
@@ -286,6 +291,7 @@ class Plotter:
         plt.show()
 
     @staticmethod
+    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def plot_anomalies_per_unit(df, unit=89):
         if 'ANOMALY' in df.columns:
             for test in df[(df['UNIT'] == unit)]['TEST'].unique():
@@ -296,21 +302,25 @@ class Plotter:
             print(f'No anomalies column in data')
 
     @staticmethod
-    def plot_anomalies_per_unit_feature(df, unit=89, feature='PT4'):
+    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
+    def plot_anomalies_per_unit_feature(df, unit=89, feature='PT4', show=False):
         try:
             for test in df[(df['UNIT'] == unit)]['TEST'].unique():
                 Plotter.plot_anomalies_per_unit_test_feature(df,
                                                              unit=unit,
                                                              test=test,
-                                                             feature=feature)
+                                                             feature=feature,
+                                                             show=show)
         except KeyError:
             print(f'No "ANOMALY" columns found in the dataset.')
 
     @staticmethod
+    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def plot_anomalies_per_unit_test_feature(df,
                                              unit=89,
                                              test=1,
-                                             feature='M4 ANGLE'):
+                                             feature='M4 ANGLE',
+                                             show=False):
         if any(df[(df['UNIT'] == unit)
                   & (df['TEST'] == test)]['ANOMALY'] == -1):
             fig = go.Figure()
@@ -341,9 +351,13 @@ class Plotter:
                 template='none',
                 title=f'Unit {unit}-{test}',
             )
-            fig.show()
+            if show: 
+                fig.show()
+                return None
+            return fig
         else:
             print(f'No anomalies found in {unit}-{test} test.')
+            return None
 
 
 if __name__ == '__main__':
