@@ -5,9 +5,11 @@ import numpy as np
 import pandas as pd
 from joblib import dump, load
 
+from sklearn.cluster import DBSCAN
+from sklearn.neighbors import LocalOutlierFactor
 from sklearn.ensemble import IsolationForest
 
-from utils.config import MODELS_PATH, SEED, VERBOSITY, FEATURES_NO_TIME_AND_COMMANDS
+from utils.config import MODELS_PATH, PREDICTIONS_PATH, SEED, VERBOSITY, FEATURES_NO_TIME_AND_COMMANDS
 from utils.readers import DataReader, Preprocessor
 from utils.plotters import Plotter
 
@@ -18,29 +20,57 @@ if __name__ == '__main__':
     df = DataReader.load_data(raw=False)
     df = Preprocessor.remove_step_zero(df)
     train = True
+    models = [
+        'IsolationForest', 'DBSCAN', 'LocalOutlierFactor', 'GaussianMixture'
+    ]
+    model = models[2]
     if train:
-        iforest = IsolationForest(n_estimators=10000,
-                                  contamination=0.01,
-                                  bootstrap=True,
-                                  warm_start=True,
-                                  random_state=SEED,
-                                  verbose=VERBOSITY,
-                                  n_jobs=-1)
-        print(f'Fitting started')
-        iforest_predict = iforest.fit_predict(
+        if model == 'IsolationForest':
+            detector = IsolationForest(n_estimators=10000,
+                                       contamination=0.01,
+                                       bootstrap=True,
+                                       warm_start=True,
+                                       random_state=SEED,
+                                       verbose=VERBOSITY,
+                                       n_jobs=-1)
+        elif model == 'DBSCAN':
+            detector = DBSCAN(eps=0.1,
+                              min_samples=10,
+                              metric='euclidean',
+                              algorithm='auto',
+                              leaf_size=30,
+                              p=None,
+                              n_jobs=-1)
+        elif model == 'LocalOutlierFactor':
+            detector = LocalOutlierFactor(n_neighbors=20,
+                                          algorithm='auto',
+                                          leaf_size=30,
+                                          metric='minkowski',
+                                          p=2,
+                                          contamination=0.01,
+                                          novelty=False,
+                                          n_jobs=-1)
+        print(f'Fitting {model} started')
+        detector_predict = detector.fit_predict(
             df[FEATURES_NO_TIME_AND_COMMANDS])
         print(f'Fitting finished')
         print(f'Saving the model')
         dump(
-            iforest,
+            detector,
             os.path.join(
                 MODELS_PATH,
-                f'iforest_{datetime.datetime.now():%d%m_%H%M}.joblib'))
-        print(f'Saving finished')
-        df['ANOMALY'] = pd.Series(iforest_predict).astype(np.int8)
+                f'{model}_{datetime.datetime.now():%d%m_%H%M}.joblib'))
+        print(f'Model saving finished')
+        df['ANOMALY'] = pd.Series(detector_predict).astype(np.int8)
+        print('Saving predictions')
+        df['ANOMALY'].to_csv(os.path.join(
+            PREDICTIONS_PATH,
+            f'{model}_{datetime.datetime.now():%d%m_%H%M}.csv'),
+                             index=False)
+        print('Saving predictions finished')
     else:
         df['ANOMALY'] = pd.read_csv(
-            os.path.join('outputs', 'predictions', 'iforest_2911_2247.csv'))
+            os.path.join('outputs', 'predictions', f'iforest_2911_2247.csv'))
     anomalous_units = df[df['ANOMALY'] == -1]['UNIT'].unique()
     normal_units = [
         unit for unit in df['UNIT'].unique() if unit not in anomalous_units
