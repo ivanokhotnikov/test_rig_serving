@@ -21,9 +21,8 @@ if __name__ == '__main__':
     df = Preprocessor.remove_step_zero(df)
     train = True
     models = [
-        'IsolationForest', 'DBSCAN', 'LocalOutlierFactor', 'GaussianMixture'
-    ]
-    model = models[2]
+        'IsolationForest', 'DBSCAN', 'LocalOutlierFactor']
+    model = models[0]
     if train:
         if model == 'IsolationForest':
             detector = IsolationForest(n_estimators=10000,
