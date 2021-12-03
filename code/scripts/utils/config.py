@@ -80,7 +80,7 @@ FEATURES_NO_TIME = [
 ]
 FEATURES_NO_TIME_AND_COMMANDS = [
     # 'TIME',
-    'STEP',
+    # 'STEP',
     # 'HSU DEMAND',
     'M1 SPEED',
     'M1 CURRENT',
