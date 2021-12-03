@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-from .config import DATA_PATH, MODELS_PATH, FEATURES, FEATURES_NO_TIME
+from .config import DATA_PATH, MODELS_PATH, FEATURES, FEATURES_NO_TIME, PREDICTIONS_PATH
 from joblib import load
 
 
@@ -164,6 +164,11 @@ class DataReader:
         df['STEP'] = df['STEP'].astype(np.uint8)
         df['TEST'] = np.uint8(1)
         return df
+
+    @staticmethod
+    def read_predictions(file):
+        return pd.read_csv(os.path.join(PREDICTIONS_PATH, file),
+                           index_col=False)
 
 
 class Preprocessor:
