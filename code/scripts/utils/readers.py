@@ -17,29 +17,24 @@ class DataReader:
                 print(f'Reading {file}')
             try:
                 if file.endswith('.csv'):
-                    current_df = pd.read_csv(
-                        os.path.join(DATA_PATH, 'raw', file),
-                        usecols=FEATURES,
-                        on_bad_lines='skip',
-                        index_col=False,
-                        header=0,
-                    )
+                    current_df = pd.read_csv(os.path.join(
+                        DATA_PATH, 'raw', file),
+                                             usecols=FEATURES,
+                                             on_bad_lines='skip',
+                                             index_col=False,
+                                             header=0)
                 elif file.endswith('.xlsx'):
-                    current_df = pd.read_excel(
-                        os.path.join(DATA_PATH, 'raw', file),
-                        usecols=FEATURES,
-                        index_col=False,
-                        header=0,
-                    )
+                    current_df = pd.read_excel(os.path.join(
+                        DATA_PATH, 'raw', file),
+                                               usecols=FEATURES,
+                                               index_col=False,
+                                               header=0)
             except ValueError:
                 if verbose:
                     print(f'{file} got a faulty header')
                 continue
             current_df[FEATURES_NO_TIME] = current_df[FEATURES_NO_TIME].apply(
-                pd.to_numeric,
-                errors='coerce',
-                downcast='float',
-            )
+                pd.to_numeric, errors='coerce', downcast='float')
             current_df = current_df.dropna(axis=0)
             name_list = file.split('-')
             try:
@@ -95,10 +90,8 @@ class DataReader:
             df[FEATURES_NO_TIME] = df[FEATURES_NO_TIME].apply(pd.to_numeric,
                                                               errors='coerce')
             df[FEATURES_NO_TIME] = df[FEATURES_NO_TIME].astype(np.float32)
-            df[['STEP', 'UNIT', 'TEST']] = df[['STEP', 'UNIT', 'TEST']].astype(
-                np.uint8,
-                errors='ignore',
-            )
+            df[['STEP', 'UNIT', 'TEST']] = df[['STEP', 'UNIT',
+                                               'TEST']].astype(np.uint8)
             df = df.dropna(axis=0)
             if verbose:
                 print('Done')
@@ -149,11 +142,9 @@ class DataReader:
                          on_bad_lines='skip',
                          index_col=False,
                          header=0)
-        df[FEATURES_NO_TIME] = df[FEATURES_NO_TIME].apply(
-            pd.to_numeric,
-            errors='coerce',
-            downcast='float',
-        )
+        df[FEATURES_NO_TIME] = df[FEATURES_NO_TIME].apply(pd.to_numeric,
+                                                          errors='coerce',
+                                                          downcast='float')
         df = df.dropna(axis=0)
         name_list = csv_file.name.split('-')
         try:
