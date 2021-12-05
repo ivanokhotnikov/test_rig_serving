@@ -14,8 +14,8 @@ from utils.readers import DataReader, Preprocessor
 from utils.plotters import Plotter
 
 
-def get_preprocessed_data():
-    df = DataReader.load_data(raw=False)
+def get_preprocessed_data(raw=False):
+    df = DataReader.load_data(raw=raw)
     df = Preprocessor.remove_step_zero(df)
     return df
 
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     print(os.getcwd())
     os.chdir('..\\..')
     print(os.getcwd())
-    df = get_preprocessed_data()
+    df = get_preprocessed_data(raw=False)
     model = 'IsolationForest'
     detector = get_model(model)
     detector_predict = fit_predict_model(df, model, detector)
