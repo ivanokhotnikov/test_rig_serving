@@ -164,6 +164,7 @@ class DataReader:
 
 class Preprocessor:
     @staticmethod
+    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def remove_outliers(df, zscore=3):
         from scipy import stats
         return df[(np.abs(stats.zscore(df[FEATURES_NO_TIME])) < zscore).all(
@@ -175,13 +176,16 @@ class Preprocessor:
         return df.drop(df[df['STEP'] == 0].index, axis=0)
 
     @staticmethod
+    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def get_warm_up_steps(df):
         return df[(df['STEP'] >= 1) & (df['STEP'] <= 11)]
 
     @staticmethod
+    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def get_break_in_steps(df):
         return df[(df['STEP'] >= 12) & (df['STEP'] <= 22)]
 
+    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     @staticmethod
     def get_performance_check_steps(df):
         return df[(df['STEP'] >= 23) & (df['STEP'] <= 33)]
