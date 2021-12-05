@@ -11,17 +11,6 @@ from .config import IMAGES_PATH, FEATURES_NO_TIME, FEATURES_NO_TIME_AND_COMMANDS
 
 class Plotter:
     @staticmethod
-    def save_fig(fig_id,
-                 tight_layout=True,
-                 fig_extension="png",
-                 resolution=300):
-        path = os.path.join(IMAGES_PATH, fig_id + "." + fig_extension)
-        print("Saving figure", fig_id)
-        if tight_layout:
-            plt.tight_layout()
-        plt.savefig(path, format=fig_extension, dpi=resolution)
-
-    @staticmethod
     def plot_unit_from_summary_file(unit_id='HYD000091-R1'):
         from readers import DataReader
 
@@ -47,27 +36,23 @@ class Plotter:
                           title=f'{unit_id}',
                           showlegend=False)
         fig.show()
-    
+
     @staticmethod
     @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def plot_unit(df, unit=89, save=False, show=True):
         for feature in FEATURES_NO_TIME_AND_COMMANDS:
             fig = go.Figure()
             for test in df[df['UNIT'] == unit]['TEST'].unique():
-                fig.add_scatter(
-                    x=df[(df['UNIT'] == unit)
-                         & (df['TEST'] == test)]['TIME'],
-                    y=df[(df['UNIT'] == unit)
-                         & (df['TEST'] == test)][feature],
-                    name=f'{unit}-{test}',
-                )
-            fig.update_layout(
-                template='none',
-                title=f'{feature}',
-                xaxis_title='TIME',
-                yaxis_title=feature,
-                showlegend=True,
-            )
+                fig.add_scatter(x=df[(df['UNIT'] == unit)
+                                     & (df['TEST'] == test)]['TIME'],
+                                y=df[(df['UNIT'] == unit)
+                                     & (df['TEST'] == test)][feature],
+                                name=f'{unit}-{test}')
+            fig.update_layout(template='none',
+                              title=f'{feature}',
+                              xaxis_title='TIME',
+                              yaxis_title=feature,
+                              showlegend=True)
             if save:
                 fig.write_image(
                     os.path.join(IMAGES_PATH,
@@ -103,13 +88,11 @@ class Plotter:
                         y=df[(df['UNIT'] == unit)
                              & (df['TEST'] == test)][feature],
                         name=f'{unit}-{test}')
-        fig.update_layout(
-            template='none',
-            title=f'{feature}',
-            xaxis_title='TIME',
-            yaxis_title=feature,
-            showlegend=True,
-        )
+        fig.update_layout(template='none',
+                          title=f'{feature}',
+                          xaxis_title='TIME',
+                          yaxis_title=feature,
+                          showlegend=True)
         if save:
             fig.write_image(
                 os.path.join(IMAGES_PATH,
@@ -137,13 +120,11 @@ class Plotter:
                             & (df['STEP'] == step)
                             & (df['TEST'] == test)][feature],
                        name=f'{unit}-{test}'))
-        fig.update_layout(
-            template='none',
-            title=f'Step {step}, {feature}',
-            xaxis_title='TIME',
-            yaxis_title=feature,
-            showlegend=True,
-        )
+        fig.update_layout(template='none',
+                          title=f'Step {step}, {feature}',
+                          xaxis_title='TIME',
+                          yaxis_title=feature,
+                          showlegend=True)
         if save:
             fig.write_image(
                 os.path.join(IMAGES_PATH,
@@ -154,18 +135,24 @@ class Plotter:
         return fig
 
     @staticmethod
-    def plot_covariance(cls, df, save=False):
+    def plot_covariance(df, save=False):
         plt.figure(figsize=(10, 10))
         sns.heatmap(df[FEATURES_NO_TIME_AND_COMMANDS].cov(),
                     cmap='RdYlBu_r',
                     linewidths=.5,
                     square=True,
                     cbar=False)
-        if save: cls.save_fig('covariance')
+        if save:
+            print(f'Saving covariance figure')
+            plt.tight_layout()
+            plt.savefig(os.path.join(IMAGES_PATH, 'covariance'),
+                        format='png',
+                        dpi=300)
+
         plt.show()
 
-    @classmethod
-    def plot_conf_matrix(cls, cm, clf_name, save=False):
+    @staticmethod
+    def plot_conf_matrix(cm, clf_name, save=False):
         np.fill_diagonal(cm, 0)
         plt.figure(figsize=(18, 18))
         sns.heatmap(cm,
@@ -176,7 +163,13 @@ class Plotter:
                     fmt='d')
         plt.ylabel('True step')
         plt.xlabel('Predicted step')
-        if save: cls.save_fig(f'confusion_matrix_{clf_name}')
+        if save:
+            print(f'Saving confusion matrix figure')
+            plt.tight_layout()
+            plt.savefig(os.path.join(IMAGES_PATH,
+                                     f'confusion_matrix_{clf_name}'),
+                        format='png',
+                        dpi=300)
         plt.show()
 
     @staticmethod
@@ -236,11 +229,9 @@ class Plotter:
                                         & (df['STEP'] == step)
                                         & (df['TEST'] == test)][feature],
                                    name=f'{unit}-{test}'))
-            fig.update_layout(
-                template='none',
-                title=f'Step {step}, {feature}',
-                xaxis_title='Time',
-            )
+            fig.update_layout(template='none',
+                              title=f'Step {step}, {feature}',
+                              xaxis_title='Time')
             fig.show()
 
     @staticmethod
@@ -262,11 +253,9 @@ class Plotter:
         for feature in FEATURES_NO_TIME_AND_COMMANDS:
             fig = go.Figure(data=go.Scatter(
                 x=units, y=features_means[feature], mode='markers'))
-            fig.update_layout(
-                template='none',
-                title=f'Step {step}, {feature} means',
-                xaxis_title='Unit',
-            )
+            fig.update_layout(template='none',
+                              title=f'Step {step}, {feature} means',
+                              xaxis_title='Unit')
             fig.show()
 
     @staticmethod
@@ -276,13 +265,11 @@ class Plotter:
         fig, axes = plt.subplots(7, 5, figsize=(15, 15))
         axes = axes.flatten()
         for idx, (ax, col) in enumerate(zip(axes, df.columns)):
-            sns.kdeplot(
-                data=df[df['STEP'] == step],
-                x=col,
-                fill=True,
-                ax=ax,
-                warn_singular=False,
-            )
+            sns.kdeplot(data=df[df['STEP'] == step],
+                        x=col,
+                        fill=True,
+                        ax=ax,
+                        warn_singular=False)
             ax.set_yticks([])
             ax.set_ylabel('')
             ax.spines[['top', 'left', 'right']].set_visible(False)
@@ -303,7 +290,10 @@ class Plotter:
 
     @staticmethod
     @st.cache(allow_output_mutation=True, suppress_st_warning=True)
-    def plot_anomalies_per_unit_feature(df, unit=89, feature='PT4', show=False):
+    def plot_anomalies_per_unit_feature(df,
+                                        unit=89,
+                                        feature='PT4',
+                                        show=False):
         try:
             for test in df[(df['UNIT'] == unit)]['TEST'].unique():
                 Plotter.plot_anomalies_per_unit_test_feature(df,
@@ -324,34 +314,24 @@ class Plotter:
         if any(df[(df['UNIT'] == unit)
                   & (df['TEST'] == test)]['ANOMALY'] == -1):
             fig = go.Figure()
-            fig.add_scatter(
-                x=df[(df['UNIT'] == unit)
-                     & (df['TEST'] == test)]['TIME'],
-                y=df[(df['UNIT'] == unit)
-                     & (df['TEST'] == test)][feature],
-                mode='lines',
-                name='Inlier',
-                line={
-                    'color': 'steelblue',
-                },
-            )
-            fig.add_scatter(
-                x=df[(df['UNIT'] == unit) & (df['TEST'] == test) &
-                     (df['ANOMALY'] == -1)]['TIME'],
-                y=df[(df['UNIT'] == unit) & (df['TEST'] == test) &
-                     (df['ANOMALY'] == -1)][feature],
-                mode='markers',
-                name='Outlier',
-                line={
-                    'color': 'indianred',
-                },
-            )
-            fig.update_layout(
-                yaxis={'title': feature},
-                template='none',
-                title=f'Unit {unit}-{test}',
-            )
-            if show: 
+            fig.add_scatter(x=df[(df['UNIT'] == unit)
+                                 & (df['TEST'] == test)]['TIME'],
+                            y=df[(df['UNIT'] == unit)
+                                 & (df['TEST'] == test)][feature],
+                            mode='lines',
+                            name='Inlier',
+                            line={'color': 'steelblue'})
+            fig.add_scatter(x=df[(df['UNIT'] == unit) & (df['TEST'] == test) &
+                                 (df['ANOMALY'] == -1)]['TIME'],
+                            y=df[(df['UNIT'] == unit) & (df['TEST'] == test) &
+                                 (df['ANOMALY'] == -1)][feature],
+                            mode='markers',
+                            name='Outlier',
+                            line={'color': 'indianred'})
+            fig.update_layout(yaxis={'title': feature},
+                              template='none',
+                              title=f'Unit {unit}-{test}')
+            if show:
                 fig.show()
                 return None
             return fig
