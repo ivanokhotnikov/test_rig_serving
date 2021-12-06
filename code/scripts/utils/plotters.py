@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from .config import IMAGES_PATH, FEATURES_NO_TIME, FEATURES_NO_TIME_AND_COMMANDS
+from .config import IMAGES_PATH, FEATURES_NO_TIME_AND_COMMANDS
 
 
 class Plotter:
@@ -312,7 +312,7 @@ class Plotter:
                                              feature='M4 ANGLE',
                                              show=False):
         if any(df[(df['UNIT'] == unit)
-                  & (df['TEST'] == test)]['ANOMALY'] == -1):
+                  & (df['TEST'] == test)][f'ANOMALY_{feature}'] == -1):
             fig = go.Figure()
             fig.add_scatter(x=df[(df['UNIT'] == unit)
                                  & (df['TEST'] == test)]['TIME'],
@@ -322,9 +322,9 @@ class Plotter:
                             name='Inlier',
                             line={'color': 'steelblue'})
             fig.add_scatter(x=df[(df['UNIT'] == unit) & (df['TEST'] == test) &
-                                 (df['ANOMALY'] == -1)]['TIME'],
+                                 (df[f'ANOMALY_{feature}'] == -1)]['TIME'],
                             y=df[(df['UNIT'] == unit) & (df['TEST'] == test) &
-                                 (df['ANOMALY'] == -1)][feature],
+                                 (df[f'ANOMALY_{feature}'] == -1)][feature],
                             mode='markers',
                             name='Outlier',
                             line={'color': 'indianred'})
@@ -339,13 +339,63 @@ class Plotter:
             print(f'No anomalies found in {unit}-{test} test.')
             return None
 
+    @staticmethod
+    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
+    def plot_anomalies_per_unit_test_step_feature(df,
+                                                  unit=89,
+                                                  test=1,
+                                                  step=23,
+                                                  feature='M4 ANGLE',
+                                                  show=False):
+        try:
+            if any(df[(df['UNIT'] == unit)
+                      & (df['TEST'] == test)
+                      & (df['STEP'] == step)]['ANOMALY'] == -1):
+                fig = go.Figure()
+                fig.add_scatter(x=df[(df['UNIT'] == unit)
+                                     & (df['TEST'] == test) &
+                                     (df['STEP'] == step)]['TIME'],
+                                y=df[(df['UNIT'] == unit)
+                                     & (df['TEST'] == test) &
+                                     (df['STEP'] == step)][feature],
+                                mode='lines',
+                                name='Inlier',
+                                line={'color': 'steelblue'})
+                fig.add_scatter(
+                    x=df[(df['UNIT'] == unit) & (df['TEST'] == test) &
+                         (df['STEP'] == step) & (df['ANOMALY'] == -1)]['TIME'],
+                    y=df[(df['UNIT'] == unit) & (df['TEST'] == test) &
+                         (df['STEP'] == step) &
+                         (df['ANOMALY'] == -1)][feature],
+                    mode='markers',
+                    name='Outlier',
+                    line={'color': 'indianred'})
+                fig.update_layout(yaxis={'title': feature},
+                                  template='none',
+                                  title=f'Unit {unit}-{test}, step {step}')
+                if show:
+                    fig.show()
+                return fig
+            else:
+                print(
+                    f'No anomalies found in {unit}-{test}, step {step} test.')
+                return None
+        except KeyError:
+            print('No "ANOMALY" column found in the dataframe')
+
 
 if __name__ == '__main__':
-    from readers import DataReader
+    import pandas as pd
+    from readers import DataReader, Preprocessor
+    from config import PREDICTIONS_PATH
 
-    os.chdir('../../..')
-    os.getcwd()
+    print(os.getcwd())
+    os.chdir('..\\..\\..')
+    print(os.getcwd())
     data = DataReader.load_data()
+    data = Preprocessor.remove_step_zero(data)
+    data['ANOMALY'] = pd.read_csv(
+        os.path.join(PREDICTIONS_PATH, 'IsolationForest_0212_1742.csv'))
     Plotter.plot_unit_raw_data(data, unit=91, in_time=False, save=False)
     Plotter.plot_unit_from_summary_file(unit_id='HYD000091-R1')
     Plotter.plot_covariance(data)
@@ -359,3 +409,9 @@ if __name__ == '__main__':
                                        feature='M4 ANGLE')
     Plotter.plot_unit_per_feature(data, unit=91, feature='M4 ANGLE')
     Plotter.plot_anomalies_per_unit_feature(data, unit=91, feature='M4 ANGLE')
+    params = {'unit': 18, 'step': 12, 'test': 2}
+    for feature in FEATURES_NO_TIME_AND_COMMANDS:
+        Plotter.plot_anomalies_per_unit_test_step_feature(data,
+                                                          feature=feature,
+                                                          show=True,
+                                                          **params)
