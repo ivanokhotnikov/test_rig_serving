@@ -185,10 +185,15 @@ class Preprocessor:
     def get_break_in_steps(df):
         return df[(df['STEP'] >= 12) & (df['STEP'] <= 22)]
 
-    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     @staticmethod
+    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def get_performance_check_steps(df):
         return df[(df['STEP'] >= 23) & (df['STEP'] <= 33)]
+
+    @staticmethod
+    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
+    def reshape_df(df):
+        return np.array(df).reshape(-1, 1)
 
 
 class ModelReader:
