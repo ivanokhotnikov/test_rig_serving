@@ -21,15 +21,15 @@ def get_preprocessed_data(raw=False):
 
 
 def get_model(model):
-    if model == 'IsolationForest':
-        detector = IsolationForest(n_estimators=10000,
+    if 'IsolationForest' in model:
+        detector = IsolationForest(n_estimators=5000,
                                    contamination=0.01,
-                                   bootstrap=True,
+                                   bootstrap=False,
                                    warm_start=True,
                                    random_state=SEED,
                                    verbose=VERBOSITY,
                                    n_jobs=-1)
-    elif model == 'DBSCAN':
+    elif 'DBSCAN' in model:
         detector = DBSCAN(eps=0.1,
                           min_samples=10,
                           metric='euclidean',
@@ -37,7 +37,7 @@ def get_model(model):
                           leaf_size=30,
                           p=None,
                           n_jobs=-1)
-    elif model == 'LocalOutlierFactor':
+    elif 'LocalOutlierFactor' in model:
         detector = LocalOutlierFactor(n_neighbors=20,
                                       algorithm='auto',
                                       leaf_size=30,
@@ -49,25 +49,38 @@ def get_model(model):
     return detector
 
 
-def save_model_and_its_predictions(df, model, detector, detector_predict):
+def save_model_and_its_predictions(model,
+                                   detector,
+                                   detector_predict,
+                                   timestamped=True):
     print(f'Saving the model')
-    dump(
-        detector,
-        os.path.join(MODELS_PATH,
-                     f'{model}_{datetime.datetime.now():%d%m_%H%M}.joblib'))
+    if timestamped:
+        dump(
+            detector,
+            os.path.join(
+                MODELS_PATH,
+                f'{model}_{datetime.datetime.now():%d%m_%H%M}.joblib'))
+    else:
+        dump(detector, os.path.join(MODELS_PATH, f'{model}.joblib'))
     print(f'Model saving finished')
     print('Saving predictions')
-    pd.Series(detector_predict).astype(np.int8).to_csv(os.path.join(
-        PREDICTIONS_PATH, f'{model}_{datetime.datetime.now():%d%m_%H%M}.csv'),
-                                                       index=False)
+    if timestamped:
+        pd.Series(detector_predict).astype(np.int8).to_csv(os.path.join(
+            PREDICTIONS_PATH,
+            f'{model}_{datetime.datetime.now():%d%m_%H%M}.csv'),
+                                                           index=False)
+    else:
+        pd.Series(detector_predict).astype(np.int8).to_csv(os.path.join(
+            PREDICTIONS_PATH, f'{model}.csv'),
+                                                           index=False)
     print('Saving predictions finished')
 
 
 def fit_predict_model(df, model, detector):
     print(f'Fitting {model} started')
-    detector_predict = detector.fit_predict(df[FEATURES_NO_TIME_AND_COMMANDS])
+    detector_predict = detector.fit_predict(np.array(df).reshape(-1, 1))
     print(f'Fitting finished')
-    return detector_predict
+    return detector, detector_predict
 
 
 if __name__ == '__main__':
@@ -75,11 +88,20 @@ if __name__ == '__main__':
     os.chdir('..\\..')
     print(os.getcwd())
     df = get_preprocessed_data(raw=False)
-    model = 'IsolationForest'
-    detector = get_model(model)
-    detector_predict = fit_predict_model(df, model, detector)
-    df['ANOMALY'] = pd.Series(detector_predict).astype(np.int8)
-    save_model_and_its_predictions(df, model, detector, detector_predict)
+    models = []
+    trained_detectors = []
+    for feature in FEATURES_NO_TIME_AND_COMMANDS:
+        model = f'IsolationForest_{feature}'
+        models.append(model)
+        detector = get_model(model)
+        detector, detector_predict = fit_predict_model(df[feature], model,
+                                                       detector)
+        trained_detectors.append(detector)
+        df[f'ANOMALY_{feature}'] = pd.Series(detector_predict).astype(np.int8)
+        save_model_and_its_predictions(model,
+                                       detector,
+                                       detector_predict,
+                                       timestamped=False)
     anomalous_units = df[df['ANOMALY'] == -1]['UNIT'].unique()
     normal_units = [
         unit for unit in df['UNIT'].unique() if unit not in anomalous_units
