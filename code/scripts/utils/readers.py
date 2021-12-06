@@ -199,8 +199,8 @@ class Preprocessor:
 class ModelReader:
     @staticmethod
     @st.cache(allow_output_mutation=True, suppress_st_warning=True)
-    def read_model(model, extension='joblib'):
-        return load(os.path.join(MODELS_PATH, f'{model}' + '.' + extension))
+    def read_model(model, extension='.joblib'):
+        return load(os.path.join(MODELS_PATH, model + extension))
 
 
 if __name__ == '__main__':
