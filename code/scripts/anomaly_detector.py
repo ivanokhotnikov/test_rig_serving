@@ -4,14 +4,14 @@ from utils.readers import DataReader, Preprocessor, ModelReader
 from utils.plotters import Plotter
 from utils.config import FEATURES_NO_TIME, FEATURES_NO_TIME_AND_COMMANDS
 
-uploaded_file = st.file_uploader('Upload your data file', type=['csv'])
+uploaded_file = st.file_uploader('Upload raw data file', type=['csv'])
 if uploaded_file is not None:
     uploaded_df = DataReader.read_newcoming_data(uploaded_file)
     df = Preprocessor.remove_step_zero(uploaded_df)
     if st.button('Show data'):
         st.write('Uploaded Data', uploaded_df)
         st.write('Preprocessed Data', df)
-    if st.button('Plot data'):
+    if st.button('Show data plots'):
         for feature in FEATURES_NO_TIME:
             st.plotly_chart(
                 Plotter.plot_unit_per_test_feature(df,
@@ -20,7 +20,7 @@ if uploaded_file is not None:
                                                    save=False,
                                                    show=False))
 if uploaded_file is not None:
-    if st.button('Predict anomaly'):
+    if st.button('Show anomalies'):
         for feature in FEATURES_NO_TIME_AND_COMMANDS:
             detector = ModelReader.read_model(f'IsolationForest_{feature}')
             df[f'ANOMALY_{feature}'] = detector.predict(
