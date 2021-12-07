@@ -319,14 +319,14 @@ class Plotter:
                             y=df[(df['UNIT'] == unit)
                                  & (df['TEST'] == test)][feature],
                             mode='lines',
-                            name='Inlier',
+                            showlegend=False,
                             line={'color': 'steelblue'})
             fig.add_scatter(x=df[(df['UNIT'] == unit) & (df['TEST'] == test) &
                                  (df[f'ANOMALY_{feature}'] == -1)]['TIME'],
                             y=df[(df['UNIT'] == unit) & (df['TEST'] == test) &
                                  (df[f'ANOMALY_{feature}'] == -1)][feature],
                             mode='markers',
-                            name='Outlier',
+                            name='Anomaly',
                             line={'color': 'indianred'})
             fig.update_layout(yaxis={'title': feature},
                               template='none',
@@ -359,7 +359,7 @@ class Plotter:
                                      & (df['TEST'] == test) &
                                      (df['STEP'] == step)][feature],
                                 mode='lines',
-                                name='Inlier',
+                                showlegend=False,
                                 line={'color': 'steelblue'})
                 fig.add_scatter(
                     x=df[(df['UNIT'] == unit) & (df['TEST'] == test) &
@@ -368,7 +368,7 @@ class Plotter:
                          (df['STEP'] == step) &
                          (df['ANOMALY'] == -1)][feature],
                     mode='markers',
-                    name='Outlier',
+                    name='Anomaly',
                     line={'color': 'indianred'})
                 fig.update_layout(yaxis={'title': feature},
                                   template='none',
