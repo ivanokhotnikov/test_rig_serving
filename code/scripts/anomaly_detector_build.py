@@ -88,6 +88,8 @@ if __name__ == '__main__':
     os.chdir('..\\..')
     print(os.getcwd())
     df = get_preprocessed_data(raw=False)
+    for feature in FEATURES_NO_TIME_AND_COMMANDS:
+        Plotter.plot_all_per_step_feature(df, step=23, feature=feature)
     models = []
     trained_detectors = []
     for feature in FEATURES_NO_TIME_AND_COMMANDS:
