@@ -204,15 +204,18 @@ class Plotter:
                 for test in df[(df['UNIT'] == unit)]['TEST'].unique():
                     if not df[(df['TEST'] == test) & (df['STEP'] == step) &
                               (df['UNIT'] == unit)].empty:
-                        fig.append_trace(
-                            go.Scatter(y=df[(df['UNIT'] == unit)
-                                            & (df['STEP'] == step)
-                                            & (df['TEST'] == test)][feature]),
-                            row=current_row,
-                            col=1)
+                        fig.append_trace(go.Scatter(
+                            x=df[(df['UNIT'] == unit)
+                                 & (df['STEP'] == step)
+                                 & (df['TEST'] == test)]['TIME'],
+                            y=df[(df['UNIT'] == unit)
+                                 & (df['STEP'] == step)
+                                 & (df['TEST'] == test)][feature]),
+                                         row=current_row,
+                                         col=1)
                         current_row += 1
             fig.update_layout(template='none',
-                              height=12000,
+                              height=20000,
                               title=f'Step {step}, {feature}',
                               showlegend=False)
         fig.show()
