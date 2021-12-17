@@ -9,7 +9,8 @@ from joblib import load
 
 class DataReader:
     @staticmethod
-    def read_all_raw_data(verbose=True):
+    def read_all_raw_data(verbose=True, features_to_read=FEATURES):
+        current_df = pd.DataFrame()
         final_df = pd.DataFrame()
         units = []
         for file in os.listdir(os.path.join(DATA_PATH, 'raw')):
@@ -19,14 +20,13 @@ class DataReader:
                 if file.endswith('.csv'):
                     current_df = pd.read_csv(os.path.join(
                         DATA_PATH, 'raw', file),
-                                             usecols=FEATURES,
-                                             on_bad_lines='skip',
+                                             usecols=features_to_read,
                                              index_col=False,
                                              header=0)
                 elif file.endswith('.xlsx'):
                     current_df = pd.read_excel(os.path.join(
                         DATA_PATH, 'raw', file),
-                                               usecols=FEATURES,
+                                               usecols=features_to_read,
                                                index_col=False,
                                                header=0)
             except ValueError:
@@ -52,25 +52,23 @@ class DataReader:
         return final_df
 
     @staticmethod
-    def read_raw_unit_data(unit='HYD000091-R1_RAW'):
+    def read_raw_unit_data(unit='HYD000091-R1_RAW', features_to_read=FEATURES):
         try:
             unit_df = pd.read_csv(os.path.join(DATA_PATH, 'raw',
                                                unit + '.csv'),
-                                  usecols=FEATURES,
+                                  usecols=features_to_read,
                                   index_col=False,
                                   header=0)
         except:
             try:
                 unit_df = pd.read_excel(os.path.join(DATA_PATH, 'raw',
                                                      unit + '.xlsx'),
-                                        usecols=FEATURES,
+                                        usecols=features_to_read,
                                         index_col=False,
                                         header=0)
             except:
                 print(f'No {unit} file found')
                 return None
-        unit_df[FEATURES_NO_TIME] = unit_df[FEATURES_NO_TIME].apply(
-            pd.to_numeric, errors='coerce')
         unit_df[FEATURES_NO_TIME] = unit_df[FEATURES_NO_TIME].astype(
             np.float32)
         unit_df = unit_df.dropna(axis=0)
@@ -83,7 +81,11 @@ class DataReader:
                 print('Reading "combined_data.csv"')
             df = pd.read_csv(os.path.join(DATA_PATH, 'processed',
                                           'combined_data.csv'),
-                             usecols=FEATURES.append('UNIT'),
+                             usecols=[
+                                 f for f in FEATURES.append('UNIT')
+                                 if f not in ('Vibration 1', ' Vibration 2',
+                                              ' DATE')
+                             ],
                              index_col=False)
             if verbose:
                 print('Processing data')
@@ -122,10 +124,16 @@ class DataReader:
             return None
 
     @classmethod
-    def load_data(cls, read_all=True, raw=False, unit=None, verbose=True):
+    def load_data(cls,
+                  read_all=True,
+                  raw=False,
+                  unit=None,
+                  verbose=True,
+                  features_to_read=FEATURES):
         if read_all:
             if raw:
-                return cls.read_all_raw_data(verbose=verbose)
+                return cls.read_all_raw_data(verbose=verbose,
+                                             features_to_read=features_to_read)
             else:
                 return cls.read_combined_data(verbose=verbose)
         else:
@@ -137,11 +145,7 @@ class DataReader:
     @staticmethod
     @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def read_newcoming_data(csv_file):
-        df = pd.read_csv(csv_file,
-                         usecols=FEATURES,
-                         on_bad_lines='skip',
-                         index_col=False,
-                         header=0)
+        df = pd.read_csv(csv_file, usecols=FEATURES, index_col=False, header=0)
         df[FEATURES_NO_TIME] = df[FEATURES_NO_TIME].apply(pd.to_numeric,
                                                           errors='coerce',
                                                           downcast='float')
@@ -206,8 +210,8 @@ class ModelReader:
 if __name__ == '__main__':
     os.chdir('../../..')
     os.getcwd()
-    all_raw_data = DataReader.read_all_raw_data(verbose=True)
-    all_raw_data['STEP'].unique()
+    all_raw_data = DataReader.read_all_raw_data(verbose=True,
+                                                features_to_read=FEATURES)
     all_combined_data = DataReader.read_combined_data(verbose=True)
     summary = DataReader.read_summary_data(verbose=True)
     combined_data = DataReader.load_data(raw=False)
