@@ -33,6 +33,8 @@ class DataReader:
                 if verbose:
                     print(f'{file} got a faulty header')
                 continue
+            current_df[' DATE'] = pd.to_datetime(current_df[' DATE'],
+                                                 errors='coerce').dt.date
             current_df[FEATURES_NO_TIME] = current_df[FEATURES_NO_TIME].apply(
                 pd.to_numeric, errors='coerce', downcast='float')
             current_df = current_df.dropna(axis=0)
