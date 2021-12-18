@@ -22,19 +22,19 @@ class DataReader:
                         DATA_PATH, 'raw', file),
                                              usecols=features_to_read,
                                              index_col=False,
+                                             parse_dates=[['TIME', ' DATE']],
                                              header=0)
                 elif file.endswith('.xlsx'):
                     current_df = pd.read_excel(os.path.join(
                         DATA_PATH, 'raw', file),
                                                usecols=features_to_read,
                                                index_col=False,
+                                               parse_dates=[['TIME', ' DATE']],
                                                header=0)
             except ValueError:
                 if verbose:
                     print(f'{file} got a faulty header')
                 continue
-            current_df[' DATE'] = pd.to_datetime(current_df[' DATE'],
-                                                 errors='coerce').dt.date
             current_df[FEATURES_NO_TIME] = current_df[FEATURES_NO_TIME].apply(
                 pd.to_numeric, errors='coerce', downcast='float')
             current_df = current_df.dropna(axis=0)
@@ -50,6 +50,7 @@ class DataReader:
             current_df['TEST'] = np.uint8(units.count(unit))
             current_df['STEP'] = current_df['STEP'].astype(np.uint8)
             final_df = pd.concat((final_df, current_df), ignore_index=True)
+        final_df['TIME_ DATE'] = pd.to_datetime(final_df['TIME_ DATE'])
         if verbose: print('Reading done!')
         return final_df
 
@@ -214,12 +215,13 @@ if __name__ == '__main__':
     os.getcwd()
     all_raw_data = DataReader.read_all_raw_data(verbose=True,
                                                 features_to_read=FEATURES)
-    all_combined_data = DataReader.read_combined_data(verbose=True)
-    summary = DataReader.read_summary_data(verbose=True)
-    combined_data = DataReader.load_data(raw=False)
-    wo_outliers = Preprocessor.remove_outliers(combined_data, zscore=3)
-    wo_step_zero = Preprocessor.remove_step_zero(combined_data)
-    warm_up = Preprocessor.get_warm_up_steps(combined_data)
-    break_in = Preprocessor.get_break_in_steps(combined_data)
-    performance_check = Preprocessor.get_performance_check_steps(combined_data)
-    model = ModelReader.read_model('isolation_forest')
+    time_sorted_df = all_raw_data.sort_values(by=['TIME_ DATE'])
+    # all_combined_data = DataReader.read_combined_data(verbose=True)
+    # summary = DataReader.read_summary_data(verbose=True)
+    # combined_data = DataReader.load_data(raw=False)
+    # wo_outliers = Preprocessor.remove_outliers(combined_data, zscore=3)
+    # wo_step_zero = Preprocessor.remove_step_zero(combined_data)
+    # warm_up = Preprocessor.get_warm_up_steps(combined_data)
+    # break_in = Preprocessor.get_break_in_steps(combined_data)
+    # performance_check = Preprocessor.get_performance_check_steps(combined_data)
+    # model = ModelReader.read_model('isolation_forest')
