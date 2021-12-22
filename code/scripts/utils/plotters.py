@@ -386,6 +386,17 @@ class Plotter:
         except KeyError:
             print('No "ANOMALY" column found in the dataframe')
 
+    @staticmethod
+    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
+    def plot_all_running_features(df):
+        for feature in FEATURES_NO_TIME_AND_COMMANDS:
+            fig = go.Figure()
+            fig.add_scatter(x=df['RUNNING TIME'], y=df[feature])
+            fig.update_layout(template='none',
+                              xaxis_title='RUNNING TIME',
+                              yaxis_title=feature)
+            fig.show()
+
 
 if __name__ == '__main__':
     import pandas as pd
