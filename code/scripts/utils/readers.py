@@ -51,6 +51,8 @@ class DataReader:
             current_df['STEP'] = current_df['STEP'].astype(np.uint8)
             final_df = pd.concat((final_df, current_df), ignore_index=True)
         final_df['TIME_ DATE'] = pd.to_datetime(final_df['TIME_ DATE'])
+        final_df['TIME'] = final_df['TIME_ DATE'].dt.time
+        final_df['DATE'] = final_df['TIME_ DATE'].dt.date
         if verbose: print('Reading done!')
         return final_df
 
@@ -179,8 +181,8 @@ class Preprocessor:
 
     @staticmethod
     @st.cache(allow_output_mutation=True, suppress_st_warning=True)
-    def remove_step_zero(df):
-        return df.drop(df[df['STEP'] == 0].index, axis=0)
+    def remove_step_zero(df, inplace=True):
+        return df.drop(df[df['STEP'] == 0].index, axis=0, inplace=inplace)
 
     @staticmethod
     @st.cache(allow_output_mutation=True, suppress_st_warning=True)
@@ -212,10 +214,13 @@ class ModelReader:
 
 if __name__ == '__main__':
     os.chdir('../../..')
-    os.getcwd()
-    all_raw_data = DataReader.read_all_raw_data(verbose=True,
-                                                features_to_read=FEATURES)
-    time_sorted_df = all_raw_data.sort_values(by=['TIME_ DATE'])
+    df = DataReader.read_all_raw_data(verbose=True, features_to_read=FEATURES)
+    df = Preprocessor.remove_step_zero(df, inplace=False)
+    df.sort_values(by=['DATE', 'TIME'], inplace=True, ignore_index=True)
+    df['RUNNING TIME'] = pd.date_range(start=f'00:00:00 {df["DATE"].min()}',
+                                       periods=len(df),
+                                       freq='S')
+    df.set_index('RUNNING TIME')
     # all_combined_data = DataReader.read_combined_data(verbose=True)
     # summary = DataReader.read_summary_data(verbose=True)
     # combined_data = DataReader.load_data(raw=False)
