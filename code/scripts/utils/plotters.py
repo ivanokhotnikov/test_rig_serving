@@ -388,14 +388,47 @@ class Plotter:
 
     @staticmethod
     @st.cache(allow_output_mutation=True, suppress_st_warning=True)
-    def plot_all_running_features(df):
+    def plot_all_running_features(df, show=True):
         for feature in FEATURES_NO_TIME_AND_COMMANDS:
             fig = go.Figure()
             fig.add_scatter(x=df['RUNNING TIME'], y=df[feature])
             fig.update_layout(template='none',
                               xaxis_title='RUNNING TIME',
                               yaxis_title=feature)
+            if show:
+                fig.show()
+                return None
+            return fig
+
+    @staticmethod
+    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
+    def plot_seasonal_decomposition_per_feature(df,
+                                                period=5400,
+                                                feature='M4 ANGLE',
+                                                show=True):
+        from statsmodels.tsa.seasonal import seasonal_decompose
+        additive_decomposition = seasonal_decompose(df[feature],
+                                                    model='additive',
+                                                    period=period)
+
+        fig = go.Figure()
+        fig.add_scatter(x=df['RUNNING TIME'], y=df[feature], name='original')
+        fig.add_scatter(x=df['RUNNING TIME'],
+                        y=additive_decomposition.trend,
+                        name='trend')
+        fig.add_scatter(x=df['RUNNING TIME'],
+                        y=additive_decomposition.seasonal,
+                        name='seasonal')
+        fig.add_scatter(x=df['RUNNING TIME'],
+                        y=additive_decomposition.resid,
+                        name='residuals')
+        fig.update_layout(template='none',
+                          xaxis_title='RUNNING TIME',
+                          yaxis_title=feature)
+        if show:
             fig.show()
+            return None
+        return fig
 
 
 if __name__ == '__main__':
