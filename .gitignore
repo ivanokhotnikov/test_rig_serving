@@ -2,11 +2,10 @@ __pycache__*
 .vscode/*
 code/scripts/utils/__pycache__*
 code/scripts/__pycache__*
-code/notebooks/*
+code/notebooks/ref/*
 data/*
 outputs/images*
 outputs/predictions*
 venv/*
-*.ipynb
 *.csv
 *.xlsx
