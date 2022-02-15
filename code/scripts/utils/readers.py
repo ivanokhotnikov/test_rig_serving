@@ -3,11 +3,12 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-from .config import DATA_PATH, MODELS_PATH, FEATURES, FEATURES_NO_TIME, PREDICTIONS_PATH
+from .config import DATA_PATH, MODELS_PATH, FEATURES, FEATURES_NO_TIME, FEATURES_NO_TIME_AND_COMMANDS, PREDICTIONS_PATH
 from joblib import load
 
 
 class DataReader:
+
     @staticmethod
     def read_all_raw_data(verbose=True, features_to_read=FEATURES):
         current_df = pd.DataFrame()
@@ -18,19 +19,25 @@ class DataReader:
                 print(f'Reading {file}')
             try:
                 if file.endswith('.csv'):
-                    current_df = pd.read_csv(os.path.join(
-                        DATA_PATH, 'raw', file),
-                                             usecols=features_to_read,
-                                             index_col=False,
-                                             parse_dates=[['TIME', ' DATE']],
-                                             header=0)
+                    current_df = pd.read_csv(
+                        os.path.join(DATA_PATH, 'raw', file),
+                        usecols=features_to_read,
+                        index_col=False,
+                        parse_dates=[['TIME', ' DATE']],
+                        dtype=dict(
+                            zip(FEATURES_NO_TIME_AND_COMMANDS, [np.float32] *
+                                len(FEATURES_NO_TIME_AND_COMMANDS))),
+                        header=0)
                 elif file.endswith('.xlsx'):
-                    current_df = pd.read_excel(os.path.join(
-                        DATA_PATH, 'raw', file),
-                                               usecols=features_to_read,
-                                               index_col=False,
-                                               parse_dates=[['TIME', ' DATE']],
-                                               header=0)
+                    current_df = pd.read_excel(
+                        os.path.join(DATA_PATH, 'raw', file),
+                        usecols=features_to_read,
+                        index_col=False,
+                        parse_dates=[['TIME', ' DATE']],
+                        dtype=dict(
+                            zip(FEATURES_NO_TIME_AND_COMMANDS, [np.float32] *
+                                len(FEATURES_NO_TIME_AND_COMMANDS))),
+                        header=0)
             except ValueError:
                 if verbose:
                     print(f'{file} got a faulty header')
@@ -49,10 +56,10 @@ class DataReader:
             current_df['UNIT'] = unit
             current_df['TEST'] = np.uint8(units.count(unit))
             current_df['STEP'] = current_df['STEP'].astype(np.uint8)
+            current_df['TIME_ DATE'] = pd.to_datetime(current_df['TIME_ DATE'])
+            current_df['TIME'] = current_df['TIME_ DATE'].dt.time
+            current_df['DATE'] = current_df['TIME_ DATE'].dt.date
             final_df = pd.concat((final_df, current_df), ignore_index=True)
-        final_df['TIME_ DATE'] = pd.to_datetime(final_df['TIME_ DATE'])
-        final_df['TIME'] = final_df['TIME_ DATE'].dt.time
-        final_df['DATE'] = final_df['TIME_ DATE'].dt.date
         if verbose: print('Reading done!')
         return final_df
 
@@ -172,6 +179,7 @@ class DataReader:
 
 
 class Preprocessor:
+
     @staticmethod
     @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def remove_outliers(df, zscore=3):
@@ -180,7 +188,6 @@ class Preprocessor:
             axis=1)]
 
     @staticmethod
-    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def remove_step_zero(df, inplace=True):
         return df.drop(df[df['STEP'] == 0].index, axis=0, inplace=inplace)
 
@@ -206,6 +213,7 @@ class Preprocessor:
 
 
 class ModelReader:
+
     @staticmethod
     @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def read_model(model, extension='.joblib'):
