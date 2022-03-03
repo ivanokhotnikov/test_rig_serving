@@ -3,6 +3,7 @@ __pycache__*
 code/scripts/utils/__pycache__*
 code/scripts/__pycache__*
 code/notebooks/ref/*
+code/notebooks/.ipynb_checkpoints/*
 data/*
 outputs/images*
 outputs/predictions*

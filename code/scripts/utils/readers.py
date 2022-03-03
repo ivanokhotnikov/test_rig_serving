@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 
 from .config import DATA_PATH, MODELS_PATH, FEATURES, FEATURES_NO_TIME, FEATURES_NO_TIME_AND_COMMANDS, PREDICTIONS_PATH
-from joblib import load
+from pickle import load
 
 
 class DataReader:

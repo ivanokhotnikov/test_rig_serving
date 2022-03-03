@@ -3,7 +3,7 @@ import random
 import datetime
 import numpy as np
 import pandas as pd
-from joblib import dump, load
+from pickle import dump, load
 
 from sklearn.cluster import DBSCAN
 from sklearn.neighbors import LocalOutlierFactor
