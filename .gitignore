@@ -7,6 +7,7 @@ code/notebooks/.ipynb_checkpoints/*
 data/*
 outputs/images*
 outputs/predictions*
+outputs/models*
 venv/*
 *.csv
 *.xlsx
