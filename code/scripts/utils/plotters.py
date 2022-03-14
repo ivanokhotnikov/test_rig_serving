@@ -6,10 +6,11 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from .config import IMAGES_PATH, FEATURES_NO_TIME_AND_COMMANDS
+from .config import ENGINEERED_FEATURES, IMAGES_PATH, FEATURES_NO_TIME_AND_COMMANDS, PRESSURE_TEMPERATURE_FEATURES
 
 
 class Plotter:
+
     @staticmethod
     def plot_unit_from_summary_file(unit_id='HYD000091-R1'):
         from readers import DataReader
@@ -283,29 +284,22 @@ class Plotter:
     @staticmethod
     @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def plot_anomalies_per_unit(df, unit=89):
-        if 'ANOMALY' in df.columns:
-            for test in df[(df['UNIT'] == unit)]['TEST'].unique():
-                for feature in FEATURES_NO_TIME_AND_COMMANDS:
-                    Plotter.plot_anomalies_per_unit_test_feature(
-                        df, unit=unit, test=test, feature=feature)
-        else:
-            print(f'No anomalies column in data')
-
-    @staticmethod
-    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
-    def plot_anomalies_per_unit_feature(df,
-                                        unit=89,
-                                        feature='PT4',
-                                        show=False):
-        try:
-            for test in df[(df['UNIT'] == unit)]['TEST'].unique():
+        for test in df[(df['UNIT'] == unit)]['TEST'].unique():
+            for feature in ENGINEERED_FEATURES + PRESSURE_TEMPERATURE_FEATURES:
                 Plotter.plot_anomalies_per_unit_test_feature(df,
                                                              unit=unit,
                                                              test=test,
-                                                             feature=feature,
-                                                             show=show)
-        except KeyError:
-            print(f'No "ANOMALY" columns found in the dataset.')
+                                                             feature=feature)
+
+    @staticmethod
+    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
+    def plot_anomalies_per_unit_feature(df, unit=89, feature='PT4', show=True):
+        for test in df[(df['UNIT'] == unit)]['TEST'].unique():
+            Plotter.plot_anomalies_per_unit_test_feature(df,
+                                                         unit=unit,
+                                                         test=test,
+                                                         feature=feature,
+                                                         show=show)
 
     @staticmethod
     @st.cache(allow_output_mutation=True, suppress_st_warning=True)
@@ -313,33 +307,39 @@ class Plotter:
                                              unit=89,
                                              test=1,
                                              feature='M4 ANGLE',
-                                             show=False):
+                                             show=True):
         if any(df[(df['UNIT'] == unit)
                   & (df['TEST'] == test)][f'ANOMALY_{feature}'] == -1):
             fig = go.Figure()
-            fig.add_scatter(x=df[(df['UNIT'] == unit)
-                                 & (df['TEST'] == test)]['TIME'],
-                            y=df[(df['UNIT'] == unit)
-                                 & (df['TEST'] == test)][feature],
-                            mode='lines',
-                            showlegend=False,
-                            line={'color': 'steelblue'})
-            fig.add_scatter(x=df[(df['UNIT'] == unit) & (df['TEST'] == test) &
-                                 (df[f'ANOMALY_{feature}'] == -1)]['TIME'],
-                            y=df[(df['UNIT'] == unit) & (df['TEST'] == test) &
-                                 (df[f'ANOMALY_{feature}'] == -1)][feature],
-                            mode='markers',
-                            name='Anomaly',
-                            line={'color': 'indianred'})
+            fig.add_scatter(
+                x=df[(df['UNIT'] == unit)
+                     & (df['TEST'] == test)]['TIME'],
+                y=df[(df['UNIT'] == unit)
+                     & (df['TEST'] == test)][feature],
+                mode='lines',
+                name='Data',
+                showlegend=False,
+                line={'color': 'steelblue'},
+            )
+            fig.add_scatter(
+                x=df[(df['UNIT'] == unit) & (df['TEST'] == test) &
+                     (df[f'ANOMALY_{feature}'] == -1)]['TIME'],
+                y=df[(df['UNIT'] == unit) & (df['TEST'] == test) &
+                     (df[f'ANOMALY_{feature}'] == -1)][feature],
+                mode='markers',
+                name='Anomaly',
+                line={'color': 'indianred'},
+            )
             fig.update_layout(yaxis={'title': feature},
                               template='none',
-                              title=f'Unit {unit}-{test}')
+                              title=f'Unit {unit}-{test}, {feature}')
             if show:
                 fig.show()
                 return None
             return fig
         else:
-            print(f'No anomalies found in {unit}-{test} test.')
+            print(
+                f'No anomalies found in {feature} during {unit}-{test} test.')
             return None
 
     @staticmethod

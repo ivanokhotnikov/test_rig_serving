@@ -2,73 +2,28 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
-import tensorflow as tf
+from joblib import dump, load
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from tensorflow import keras
 from keras import layers
 
-INITIAL_TREND_FEATURES = [
-    'M1 CURRENT', 'M1 TORQUE', 'PT4', 'D1 RPM', 'D1 CURRENT', 'D1 TORQUE',
-    'M2 RPM', 'M2 Amp', 'M2 Torque', 'CHARGE PT', 'CHARGE FLOW', 'M3 Amp',
-    'M3 Torque', 'Servo PT', 'SERVO FLOW', 'HSU IN', 'TT2', 'HSU OUT',
-    'M5 Amp', 'M5 Torque', 'M6 RPM', 'M6 Amp', 'M6 Torque', 'M7 RPM', 'M7 Amp',
-    'M7 Torque', 'Vibration 1', ' Vibration 2'
-]
-
-ENGINEERED_FEATURES = [
-    'DRIVE POWER', 'LOAD POWER', 'CHARGE MECH POWER', 'CHARGE HYD POWER',
-    'SERVO MECH POWER', 'SERVO HYD POWER', 'SCAVENGE POWER',
-    'MAIN COOLER POWER', 'GEARBOX COOLER POWER'
-]
-
-TREND_FEATURES = ENGINEERED_FEATURES + [
-    'PT4', 'HSU IN', 'TT2', 'HSU OUT', 'Vibration 1', ' Vibration 2'
-]
-TIME_STEPS = 120
+from utils.config import (MODELS_PATH, PREDICTIONS_PATH, SEED, VERBOSITY,
+                          FEATURES_NO_TIME_AND_COMMANDS, ENGINEERED_FEATURES,
+                          PRESSURE_TEMPERATURE_FEATURES,
+                          FEATURES_FOR_ANOMALY_DETECTION, TIME_STEPS,
+                          EARLY_STOPPING)
+from utils.readers import DataReader, Preprocessor
+from utils.plotters import Plotter
 
 
-def read_data(mode='preprocessed'):
-    if mode == 'raw':
-        df = DataReader.read_all_raw_data(verbose=True,
-                                          features_to_read=FEATURES)
-        df = Preprocessor.remove_step_zero(df, inplace=False)
-        df.sort_values(by=['DATE', 'TIME'], inplace=True, ignore_index=True)
-    if mode == 'processed':
-        df = pd.read_csv(os.path.join('data', 'processed',
-                                      'combined_timed_data.csv'),
-                         parse_dates=True,
-                         infer_datetime_format=True,
-                         dtype=dict(
-                             zip(FEATURES_NO_TIME,
-                                 [np.float32] * len(FEATURES_NO_TIME))))
-        df[['STEP', 'UNIT', 'TEST',
-            'ARMANI']] = df[['STEP', 'UNIT', 'TEST',
-                             'ARMANI']].astype(np.uint8)
-        df['TIME'] = pd.to_datetime(df['TIME'])
-        df['DATE'] = pd.to_datetime(df['DATE'])
-    df['RUNNING TIME'] = pd.date_range(start=f'{min(df["DATE"])} 00:00:00',
-                                       periods=len(df),
-                                       freq='s')
-    df['RUNNING DURATION'] = pd.to_timedelta(range(len(df)), unit='s')
-    df['RUNNING HOURS'] = (
-        pd.to_timedelta(range(len(df)), unit='s').total_seconds() /
-        3600).astype(np.float32)
+def get_preprocessed_data(raw=False,
+                          features_to_read=FEATURES_FOR_ANOMALY_DETECTION):
+    df = DataReader.load_data(raw=raw, features_to_read=features_to_read)
+    df = Preprocessor.remove_step_zero(df)
+    df = Preprocessor.feature_engineering(df)
     return df
-
-
-def plot_feature(df, feature):
-    plt.figure(figsize=(15, 5), tight_layout=True)
-    plt.plot(df['RUNNING HOURS'], df[feature])
-    plt.ylabel(feature)
-    plt.xlabel('TIME, HOURS')
-    plt.show()
-
-
-def plot_data(df):
-    for feature in df.columns:
-        if 'RUNNING' not in feature:
-            plot_feature(df, feature)
 
 
 def create_sequences(values, time_steps=TIME_STEPS):
@@ -78,23 +33,9 @@ def create_sequences(values, time_steps=TIME_STEPS):
     return np.stack(output)
 
 
-def scheduler(epoch, lr):
-    if epoch < 10:
-        return lr
-    elif epoch < 20:
-        return lr * tf.math.exp(-0.1)
-    elif epoch < 50:
-        return lr * tf.math.exp(-0.01)
-
-
 if __name__ == '__main__':
-    os.chdir('\\Users\\iokhotnikov\\Documents\\Python\\hhl\\test_rig\\code')
-    from utils.readers import DataReader, Preprocessor
-    from utils.config import FEATURES, FEATURES_NO_TIME, MODELS_PATH
-
-    os.chdir('\\Users\\iokhotnikov\\Documents\\Python\\hhl\\test_rig')
-    df = read_data(mode='processed')
-
+    os.chdir('..\\..')
+    df = get_preprocessed_data(raw=False)
     test_lengths = []
     step_lengths = []
     for unit in df['UNIT'].unique():
@@ -114,148 +55,143 @@ if __name__ == '__main__':
     print(
         f'Mean step duration {mean_step_dur_sec:.2f} seconds = {mean_step_dur_sec/60:.2f} minutes = {mean_step_dur_sec/3600:.2f} hours'
     )
-    df['DRIVE POWER'] = (df['M1 SPEED'] * df['M1 TORQUE'] * np.pi / 30 /
-                         1e3).astype(np.float32)
-    df['LOAD POWER'] = abs(df['D1 RPM'] * df['D1 TORQUE'] * np.pi / 30 /
-                           1e3).astype(np.float32)
-    df['CHARGE MECH POWER'] = (df['M2 RPM'] * df['M2 Torque'] * np.pi / 30 /
-                               1e3).astype(np.float32)
-    df['CHARGE HYD POWER'] = (df['CHARGE PT'] * 1e5 * df['CHARGE FLOW'] *
-                              1e-3 / 60 / 1e3).astype(np.float32)
-    df['SERVO MECH POWER'] = (df['M3 RPM'] * df['M3 Torque'] * np.pi / 30 /
-                              1e3).astype(np.float32)
-    df['SERVO HYD POWER'] = (df['Servo PT'] * 1e5 * df['SERVO FLOW'] * 1e-3 /
-                             60 / 1e3).astype(np.float32)
-    df['SCAVENGE POWER'] = (df['M5 RPM'] * df['M5 Torque'] * np.pi / 30 /
-                            1e3).astype(np.float32)
-    df['MAIN COOLER POWER'] = (df['M6 RPM'] * df['M6 Torque'] * np.pi / 30 /
-                               1e3).astype(np.float32)
-    df['GEARBOX COOLER POWER'] = (df['M7 RPM'] * df['M7 Torque'] * np.pi / 30 /
-                                  1e3).astype(np.float32)
+    trained_detectors = []
+    for feature in ENGINEERED_FEATURES + PRESSURE_TEMPERATURE_FEATURES:
+        model = f'ConvolutionalAutoencoder_{feature}'
+        train_data, test_data = train_test_split(df[feature],
+                                                 train_size=0.8,
+                                                 shuffle=False)
+        train_data.sort_index(inplace=True)
+        test_data.sort_index(inplace=True)
+        anomaly_df = pd.DataFrame(test_data[TIME_STEPS - 1:].copy())
+        anomaly_df.index = test_data[TIME_STEPS - 1:].index
 
-    # for feature in TREND_FEATURES:
-    #     plot_feature(df, feature)
+        scaler = StandardScaler()
+        scaled_train_data = scaler.fit_transform(
+            train_data.values.reshape(-1, 1))
+        dump(
+            scaler,
+            os.path.join(MODELS_PATH, 'anomaly_detectors',
+                         f'{model}_scaler.joblib'))
 
-    feature = df.pop('SERVO MECH POWER').astype(np.float32)
-    del df
+        x_train = create_sequences(scaled_train_data.reshape(-1, 1))
+        print(x_train.shape)
 
-    train_feature = feature[:150000].values
-    train_feature.shape
+        detector = keras.Sequential([
+            layers.Input(shape=(x_train.shape[1], x_train.shape[2])),
+            layers.Conv1D(filters=32,
+                          kernel_size=6,
+                          padding='same',
+                          strides=2,
+                          activation='relu'),
+            layers.Dropout(rate=0.25),
+            layers.Conv1D(filters=16,
+                          kernel_size=6,
+                          padding='same',
+                          strides=2,
+                          activation='relu'),
+            layers.Conv1DTranspose(filters=16,
+                                   kernel_size=6,
+                                   padding='same',
+                                   strides=2,
+                                   activation='relu'),
+            layers.Dropout(rate=0.25),
+            layers.Conv1DTranspose(filters=32,
+                                   kernel_size=6,
+                                   padding='same',
+                                   strides=2,
+                                   activation='relu'),
+            layers.Conv1DTranspose(filters=1, kernel_size=6, padding='same'),
+        ])
+        detector.summary()
 
-    train_feature_mean = train_feature.mean()
-    train_feature_std = train_feature.std()
-    train_feature = (train_feature - train_feature_mean) / train_feature_std
+        detector.compile(
+            loss=keras.losses.mean_squared_error,
+            optimizer=keras.optimizers.RMSprop(learning_rate=0.001),
+        )
 
-    x_train = create_sequences(train_feature.reshape(-1, 1))
-    print(x_train.shape)
+        history = detector.fit(
+            x_train,
+            x_train,
+            epochs=50,
+            batch_size=128,
+            validation_split=0.2,
+            verbose=VERBOSITY,
+            callbacks=[
+                keras.callbacks.EarlyStopping(patience=EARLY_STOPPING,
+                                              monitor='val_loss',
+                                              mode='min',
+                                              verbose=VERBOSITY,
+                                              restore_best_weights=True),
+                keras.callbacks.ReduceLROnPlateau(monitor='val_loss',
+                                                  factor=0.75,
+                                                  patience=EARLY_STOPPING // 2,
+                                                  verbose=VERBOSITY,
+                                                  mode='min')
+            ])
 
-    model = keras.Sequential([
-        layers.Input(shape=(x_train.shape[1], x_train.shape[2])),
-        layers.Conv1D(filters=32,
-                      kernel_size=6,
-                      padding='same',
-                      strides=2,
-                      activation='relu'),
-        layers.Dropout(rate=0.25),
-        layers.Conv1D(filters=16,
-                      kernel_size=6,
-                      padding='same',
-                      strides=2,
-                      activation='relu'),
-        layers.Conv1DTranspose(filters=16,
-                               kernel_size=6,
-                               padding='same',
-                               strides=2,
-                               activation='relu'),
-        layers.Dropout(rate=0.25),
-        layers.Conv1DTranspose(filters=32,
-                               kernel_size=6,
-                               padding='same',
-                               strides=2,
-                               activation='relu'),
-        layers.Conv1DTranspose(filters=1, kernel_size=6, padding='same'),
-    ])
-    model.summary()
+        trained_detectors.append(detector)
+        detector.save(
+            os.path.join(MODELS_PATH, 'anomaly_detectors', f'{model}.h5'))
 
-    model.compile(
-        loss=keras.losses.mean_squared_error,
-        optimizer=keras.optimizers.RMSprop(learning_rate=0.001),
-    )
+        plt.plot(history.history['loss'], label='Training Loss')
+        plt.plot(history.history['val_loss'], label='Validation Loss')
+        plt.legend()
+        plt.show()
 
-    history = model.fit(x_train,
-                        x_train,
-                        epochs=50,
-                        batch_size=64,
-                        validation_split=0.15,
-                        verbose=1,
-                        callbacks=[
-                            keras.callbacks.EarlyStopping(
-                                patience=10,
-                                monitor='val_loss',
-                                mode='min',
-                                verbose=1,
-                                restore_best_weights=True),
-                            keras.callbacks.LearningRateScheduler(scheduler,
-                                                                  verbose=1)
-                        ])
+        # Get train MAE loss.
+        x_train_pred = detector.predict(x_train)
+        train_mae_loss = np.mean(np.abs(x_train_pred - x_train), axis=1)
 
-    plt.plot(history.history['loss'], label='Training Loss')
-    plt.plot(history.history['val_loss'], label='Validation Loss')
-    plt.legend()
-    plt.show()
+        plt.hist(train_mae_loss, bins=50)
+        plt.xlabel('Train MAE loss')
+        plt.ylabel('No of samples')
+        plt.show()
 
-    # Get train MAE loss.
-    x_train_pred = model.predict(x_train)
-    train_mae_loss = np.mean(np.abs(x_train_pred - x_train), axis=1)
+        # Get reconstruction loss threshold.
+        threshold = np.percentile(train_mae_loss, q=95)
+        print('Reconstruction error threshold: ', threshold)
+        with open(
+                os.path.join(MODELS_PATH, 'anomaly_detectors',
+                             f'{model}_threshold.txt'), 'w+') as f:
+            f.write(str(threshold)),
 
-    plt.hist(train_mae_loss, bins=50)
-    plt.xlabel("Train MAE loss")
-    plt.ylabel("No of samples")
-    plt.show()
+        scaled_test_data = scaler.transform(test_data.values.reshape(-1, 1))
 
-    # Get reconstruction loss threshold.
-    threshold = np.max(train_mae_loss)
-    print("Reconstruction error threshold: ", threshold)
+        # Create sequences from test values.
+        x_test = create_sequences(scaled_test_data.reshape(-1, 1))
+        print('Test input shape: ', x_test.shape)
 
-    # Checking how the first sequence is learnt
-    plt.plot(x_train[-1], label='Target')
-    plt.plot(x_train_pred[-1], label='Prediction')
-    plt.legend()
-    plt.show()
+        # Get test MAE loss.
+        x_test_pred = detector.predict(x_test)
+        test_mae_loss = np.mean(np.abs(x_test_pred - x_test), axis=1)
+        test_mae_loss = test_mae_loss.reshape((-1))
 
-    test_feature = feature[150000:]
-    test_feature = (test_feature - train_feature_mean) / train_feature_std
-    fig, ax = plt.subplots()
-    test_feature.plot(legend=False, ax=ax)
-    plt.show()
+        plt.hist(test_mae_loss, bins=50)
+        plt.xlabel('Test MAE loss')
+        plt.ylabel('No of samples')
+        plt.show()
 
-    # Create sequences from test values.
-    x_test = create_sequences(test_feature.values.reshape(-1, 1))
-    print("Test input shape: ", x_test.shape)
+        # Detect all the samples which are anomalies.
+        anomalies = test_mae_loss > threshold
+        print('Number of anomaly samples: ', np.sum(anomalies))
+        print('Indices of anomaly samples: ', np.where(anomalies))
 
-    # Get test MAE loss.
-    x_test_pred = model.predict(x_test)
-    test_mae_loss = np.mean(np.abs(x_test_pred - x_test), axis=1)
-    test_mae_loss = test_mae_loss.reshape((-1))
+        # data i is an anomaly if samples [(i - timesteps + 1) to (i)] are anomalies
+        anomalous_data_indices = []
+        for data_idx in range(TIME_STEPS - 1,
+                              len(scaled_test_data) - TIME_STEPS + 1):
+            if np.all(anomalies[data_idx - TIME_STEPS + 1:data_idx]):
+                anomalous_data_indices.append(data_idx)
 
-    plt.hist(test_mae_loss, bins=50)
-    plt.xlabel("test MAE loss")
-    plt.ylabel("No of samples")
-    plt.show()
+        df.loc[:,f'ANOMALY_{feature}'] = 1
+        df.loc[anomalous_data_indices, f'ANOMALY_{feature}'] = -1
 
-    # Detect all the samples which are anomalies.
-    anomalies = test_mae_loss > threshold
-    print("Number of anomaly samples: ", np.sum(anomalies))
-    print("Indices of anomaly samples: ", np.where(anomalies))
-
-    # data i is an anomaly if samples [(i - timesteps + 1) to (i)] are anomalies
-    anomalous_data_indices = []
-    for data_idx in range(TIME_STEPS - 1, len(test_feature) - TIME_STEPS + 1):
-        if np.all(anomalies[data_idx - TIME_STEPS + 1:data_idx]):
-            anomalous_data_indices.append(data_idx)
-
-    plt.figure(figsize=(15, 5))
-    plt.plot(x_train.reshape((-1)), label='Train')
-    plt.plot(x_train_pred.reshape((-1)), label='Train Pred')
-    plt.legend()
-    plt.show()
+        plt.figure(figsize=(15, 5))
+        plt.plot(test_data.index, test_data.values.reshape((-1)))
+        plt.scatter(test_data.iloc[anomalous_data_indices].index,
+                    test_data.iloc[anomalous_data_indices].values.reshape(
+                        (-1)),
+                    color='r')
+        plt.ylabel(feature)
+        plt.show()

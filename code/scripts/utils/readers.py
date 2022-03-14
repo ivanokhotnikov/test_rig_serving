@@ -1,16 +1,65 @@
+from asyncio import threads
 import os
 import numpy as np
 import pandas as pd
 import streamlit as st
 
-from .config import DATA_PATH, MODELS_PATH, FEATURES, FEATURES_NO_TIME, FEATURES_NO_TIME_AND_COMMANDS, PREDICTIONS_PATH
-from pickle import load
+from tensorflow import keras
+
+from .config import (DATA_PATH, FEATURES_FOR_ANOMALY_DETECTION, MODELS_PATH,
+                     FEATURES_FOR_FORECASTING, FEATURES_NO_TIME,
+                     FEATURES_NO_TIME_AND_COMMANDS, PREDICTIONS_PATH,
+                     TIME_STEPS)
+from joblib import load
+
+
+def read_data(mode='processed'):
+    if mode == 'raw':
+        df = DataReader.read_all_raw_data(
+            verbose=True, features_to_read=FEATURES_FOR_ANOMALY_DETECTION)
+        df = Preprocessor.remove_step_zero(df)
+    if mode == 'processed':
+        df = pd.read_csv(os.path.join('data', 'processed',
+                                      'combined_data.csv'),
+                         parse_dates=True,
+                         infer_datetime_format=True,
+                         dtype=dict(
+                             zip(FEATURES_NO_TIME,
+                                 [np.float32] * len(FEATURES_NO_TIME))))
+        df[['STEP', 'UNIT', 'TEST',
+            'ARMANI']] = df[['STEP', 'UNIT', 'TEST',
+                             'ARMANI']].astype(np.uint8)
+        df['TIME'] = pd.to_datetime(df['TIME'])
+        df['DATE'] = pd.to_datetime(df['DATE'])
+    df['DURATION'] = pd.to_timedelta(range(len(df)), unit='s')
+    df['TOTAL SECONDS'] = (pd.to_timedelta(range(
+        len(df)), unit='s').total_seconds()).astype(np.uint32)
+    df['HOURS'] = (df['TOTAL SECONDS'] // 3600).astype(np.uint16)
+    df['MINUTES'] = (df['TOTAL SECONDS'] % 3600 // 60).astype(np.uint8)
+    df['SECONDS'] = (df['TOTAL SECONDS'] % 60).astype(np.uint8)
+    return df
+
+
+def get_preprocessed_data(raw=False,
+                          features_to_read=FEATURES_FOR_ANOMALY_DETECTION):
+    df = DataReader.load_data(raw=raw, features_to_read=features_to_read)
+    df = Preprocessor.remove_step_zero(df)
+    df = Preprocessor.feature_engineering(df)
+    return df
+
+
+def create_sequences(values, time_steps=TIME_STEPS):
+    output = []
+    for i in range(len(values) - time_steps + 1):
+        output.append(values[i:(i + time_steps)])
+    return np.stack(output)
 
 
 class DataReader:
 
     @staticmethod
-    def read_all_raw_data(verbose=True, features_to_read=FEATURES):
+    def read_all_raw_data(verbose=True,
+                          features_to_read=FEATURES_FOR_ANOMALY_DETECTION):
         current_df = pd.DataFrame()
         final_df = pd.DataFrame()
         units = []
@@ -23,7 +72,7 @@ class DataReader:
                         os.path.join(DATA_PATH, 'raw', file),
                         usecols=features_to_read,
                         index_col=False,
-                        parse_dates=[['TIME', ' DATE']],
+                        parse_dates=['TIME'],
                         dtype=dict(
                             zip(FEATURES_NO_TIME_AND_COMMANDS, [np.float32] *
                                 len(FEATURES_NO_TIME_AND_COMMANDS))),
@@ -33,7 +82,7 @@ class DataReader:
                         os.path.join(DATA_PATH, 'raw', file),
                         usecols=features_to_read,
                         index_col=False,
-                        parse_dates=[['TIME', ' DATE']],
+                        parse_dates=['TIME'],
                         dtype=dict(
                             zip(FEATURES_NO_TIME_AND_COMMANDS, [np.float32] *
                                 len(FEATURES_NO_TIME_AND_COMMANDS))),
@@ -56,15 +105,15 @@ class DataReader:
             current_df['UNIT'] = unit
             current_df['TEST'] = np.uint8(units.count(unit))
             current_df['STEP'] = current_df['STEP'].astype(np.uint8)
-            current_df['TIME_ DATE'] = pd.to_datetime(current_df['TIME_ DATE'])
-            current_df['TIME'] = current_df['TIME_ DATE'].dt.time
-            current_df['DATE'] = current_df['TIME_ DATE'].dt.date
+            current_df['TIME'] = pd.to_datetime(current_df['TIME'],
+                                                errors='coerce').dt.time
             final_df = pd.concat((final_df, current_df), ignore_index=True)
         if verbose: print('Reading done!')
         return final_df
 
     @staticmethod
-    def read_raw_unit_data(unit='HYD000091-R1_RAW', features_to_read=FEATURES):
+    def read_raw_unit_data(unit='HYD000091-R1_RAW',
+                           features_to_read=FEATURES_FOR_ANOMALY_DETECTION):
         try:
             unit_df = pd.read_csv(os.path.join(DATA_PATH, 'raw',
                                                unit + '.csv'),
@@ -87,32 +136,22 @@ class DataReader:
         return unit_df
 
     @staticmethod
-    def read_combined_data(verbose=True):
-        try:
-            if verbose:
-                print('Reading "combined_data.csv"')
-            df = pd.read_csv(os.path.join(DATA_PATH, 'processed',
-                                          'combined_data.csv'),
-                             usecols=[
-                                 f for f in FEATURES.append('UNIT')
-                                 if f not in ('Vibration 1', ' Vibration 2',
-                                              ' DATE')
-                             ],
-                             index_col=False)
-            if verbose:
-                print('Processing data')
-            df[FEATURES_NO_TIME] = df[FEATURES_NO_TIME].apply(pd.to_numeric,
-                                                              errors='coerce')
-            df[FEATURES_NO_TIME] = df[FEATURES_NO_TIME].astype(np.float32)
-            df[['STEP', 'UNIT', 'TEST']] = df[['STEP', 'UNIT',
-                                               'TEST']].astype(np.uint8)
-            df = df.dropna(axis=0)
-            if verbose:
-                print('Done')
-            return df
-        except:
-            print('No "combined_data.csv" found in the "data" directory')
-            return None
+    def read_combined_data():
+        print('Reading "combined_data.csv"')
+        df = pd.read_csv(
+            os.path.join(DATA_PATH, 'processed', 'combined_data.csv'),
+            usecols=[
+                f for f in FEATURES_FOR_ANOMALY_DETECTION + ['UNIT', 'TEST']
+                if f not in ('Vibration 1', ' Vibration 2', ' DATE')
+            ],
+            index_col=False)
+        df[FEATURES_NO_TIME] = df[FEATURES_NO_TIME].apply(pd.to_numeric,
+                                                          errors='coerce')
+        df[FEATURES_NO_TIME] = df[FEATURES_NO_TIME].astype(np.float32)
+        df[['STEP', 'UNIT', 'TEST']] = df[['STEP', 'UNIT',
+                                           'TEST']].astype(np.uint8)
+        print('Reading done')
+        return df
 
     @staticmethod
     def read_summary_data(verbose=True):
@@ -141,13 +180,13 @@ class DataReader:
                   raw=False,
                   unit=None,
                   verbose=True,
-                  features_to_read=FEATURES):
+                  features_to_read=FEATURES_FOR_ANOMALY_DETECTION):
         if read_all:
             if raw:
                 return cls.read_all_raw_data(verbose=verbose,
                                              features_to_read=features_to_read)
             else:
-                return cls.read_combined_data(verbose=verbose)
+                return cls.read_combined_data()
         else:
             if raw:
                 return cls.read_raw_unit_data(unit=unit)
@@ -157,7 +196,10 @@ class DataReader:
     @staticmethod
     @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def read_newcoming_data(csv_file):
-        df = pd.read_csv(csv_file, usecols=FEATURES, index_col=False, header=0)
+        df = pd.read_csv(csv_file,
+                         usecols=FEATURES_FOR_ANOMALY_DETECTION,
+                         index_col=False,
+                         header=0)
         df[FEATURES_NO_TIME] = df[FEATURES_NO_TIME].apply(pd.to_numeric,
                                                           errors='coerce',
                                                           downcast='float')
@@ -188,8 +230,9 @@ class Preprocessor:
             axis=1)]
 
     @staticmethod
-    def remove_step_zero(df, inplace=True):
-        return df.drop(df[df['STEP'] == 0].index, axis=0, inplace=inplace)
+    def remove_step_zero(df):
+        return df.drop(df[df['STEP'] == 0].index,
+                       axis=0).reset_index(drop=True)
 
     @staticmethod
     @st.cache(allow_output_mutation=True, suppress_st_warning=True)
@@ -208,27 +251,65 @@ class Preprocessor:
 
     @staticmethod
     @st.cache(allow_output_mutation=True, suppress_st_warning=True)
-    def reshape_df(df):
-        return np.array(df).reshape(-1, 1)
+    def feature_engineering(df):
+        df['DRIVE POWER'] = (df['M1 SPEED'] * df['M1 TORQUE'] * np.pi / 30 /
+                             1e3).astype(np.float32)
+        df['LOAD POWER'] = abs(df['D1 RPM'] * df['D1 TORQUE'] * np.pi / 30 /
+                               1e3).astype(np.float32)
+        df['CHARGE MECH POWER'] = (df['M2 RPM'] * df['M2 Torque'] * np.pi /
+                                   30 / 1e3).astype(np.float32)
+        df['CHARGE HYD POWER'] = (df['CHARGE PT'] * 1e5 * df['CHARGE FLOW'] *
+                                  1e-3 / 60 / 1e3).astype(np.float32)
+        df['SERVO MECH POWER'] = (df['M3 RPM'] * df['M3 Torque'] * np.pi / 30 /
+                                  1e3).astype(np.float32)
+        df['SERVO HYD POWER'] = (df['Servo PT'] * 1e5 * df['SERVO FLOW'] *
+                                 1e-3 / 60 / 1e3).astype(np.float32)
+        df['SCAVENGE POWER'] = (df['M5 RPM'] * df['M5 Torque'] * np.pi / 30 /
+                                1e3).astype(np.float32)
+        df['MAIN COOLER POWER'] = (df['M6 RPM'] * df['M6 Torque'] * np.pi /
+                                   30 / 1e3).astype(np.float32)
+        df['GEARBOX COOLER POWER'] = (df['M7 RPM'] * df['M7 Torque'] * np.pi /
+                                      30 / 1e3).astype(np.float32)
+        return df
 
 
 class ModelReader:
 
     @staticmethod
     @st.cache(allow_output_mutation=True, suppress_st_warning=True)
-    def read_model(model, extension='.joblib'):
-        return load(os.path.join(MODELS_PATH, model + extension))
+    def read_model(model, task='anomaly_detection', extension='.joblib'):
+        if task == 'anomaly_detection':
+            if 'Autoencoder' in model:
+                if 'scaler' in model:
+                    extension = '.joblib'
+                    return load(
+                        os.path.join(MODELS_PATH, 'anomaly_detectors',
+                                     model + extension))
+                if 'threshold' in model:
+                    extension = '.txt'
+                    with open(
+                            os.path.join(MODELS_PATH, 'anomaly_detectors',
+                                         model + extension), 'r') as file:
+                        threshold = np.float16(file.read().rstrip())
+                    return threshold
+                extension = '.h5'
+                return keras.models.load_model(
+                    os.path.join(MODELS_PATH, 'anomaly_detectors',
+                                 model + extension))
+            return load(
+                os.path.join(MODELS_PATH, 'anomaly_detectors',
+                             model + extension))
+        elif task == 'decomopose':
+            return load(
+                os.path.join(MODELS_PATH, 'decomposers', model + extension))
+        elif task == 'forecast':
+            return load(
+                os.path.join(MODELS_PATH, 'forecasters', model + extension))
 
 
 if __name__ == '__main__':
-    os.chdir('../../..')
-    df = DataReader.read_all_raw_data(verbose=True, features_to_read=FEATURES)
-    df = Preprocessor.remove_step_zero(df, inplace=False)
-    df.sort_values(by=['DATE', 'TIME'], inplace=True, ignore_index=True)
-    df['RUNNING TIME'] = pd.date_range(start=f'00:00:00 {df["DATE"].min()}',
-                                       periods=len(df),
-                                       freq='S')
-    df.set_index('RUNNING TIME')
+    os.chdir('\\Users\\iokhotnikov\\Documents\\Python\\hhl\\test_rig')
+    df = read_data(mode='raw')
     # all_combined_data = DataReader.read_combined_data(verbose=True)
     # summary = DataReader.read_summary_data(verbose=True)
     # combined_data = DataReader.load_data(raw=False)
