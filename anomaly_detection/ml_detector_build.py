@@ -1,5 +1,4 @@
 import os
-import random
 import datetime
 import numpy as np
 import pandas as pd
@@ -85,7 +84,6 @@ def save_model_and_its_predictions(model,
 
 
 if __name__ == '__main__':
-    # os.chdir('..')
     df = get_preprocessed_data(raw=False)
     models = []
     trained_detectors = []
