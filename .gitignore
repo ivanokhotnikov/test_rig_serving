@@ -1,13 +1,7 @@
 __pycache__*
 .vscode/*
-code/scripts/utils/__pycache__*
-code/scripts/__pycache__*
-code/notebooks/ref/*
-code/notebooks/.ipynb_checkpoints/*
 data/*
-outputs/images*
-outputs/predictions*
-outputs/models*
-venv/*
+anomaly_detection/models*
+forecasting/models*
 *.csv
 *.xlsx

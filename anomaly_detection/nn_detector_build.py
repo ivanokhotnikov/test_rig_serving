@@ -34,7 +34,7 @@ def create_sequences(values, time_steps=TIME_STEPS):
 
 
 if __name__ == '__main__':
-    os.chdir('..\\..')
+    os.chdir('..')
     df = get_preprocessed_data(raw=False)
     test_lengths = []
     step_lengths = []

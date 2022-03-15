@@ -57,7 +57,8 @@ def get_model(model):
 def save_model_and_its_predictions(model,
                                    detector,
                                    detector_predict,
-                                   timestamped=True):
+                                   timestamped=True,
+                                   save_predictions=False):
     print(f'Saving the model')
     if timestamped:
         dump(
@@ -69,21 +70,22 @@ def save_model_and_its_predictions(model,
         dump(detector,
              os.path.join(MODELS_PATH, 'anomaly_detectors', f'{model}.joblib'))
     print(f'Model saving finished')
-    print('Saving predictions')
-    if timestamped:
-        pd.Series(detector_predict).astype(np.int8).to_csv(os.path.join(
-            PREDICTIONS_PATH,
-            f'{model}_{datetime.datetime.now():%d%m_%H%M}.csv'),
-                                                           index=False)
-    else:
-        pd.Series(detector_predict).astype(np.int8).to_csv(os.path.join(
-            PREDICTIONS_PATH, f'{model}.csv'),
-                                                           index=False)
-    print('Saving predictions finished')
+    if save_predictions:
+        print('Saving predictions')
+        if timestamped:
+            pd.Series(detector_predict).astype(np.int8).to_csv(os.path.join(
+                PREDICTIONS_PATH,
+                f'{model}_{datetime.datetime.now():%d%m_%H%M}.csv'),
+                                                               index=False)
+        else:
+            pd.Series(detector_predict).astype(np.int8).to_csv(os.path.join(
+                PREDICTIONS_PATH, f'{model}.csv'),
+                                                               index=False)
+        print('Predictions saved')
 
 
 if __name__ == '__main__':
-    os.chdir('..\\..')
+    # os.chdir('..')
     df = get_preprocessed_data(raw=False)
     models = []
     trained_detectors = []
@@ -105,20 +107,5 @@ if __name__ == '__main__':
         save_model_and_its_predictions(model,
                                        detector,
                                        detector_predict,
-                                       timestamped=False)
-    # anomalous_units = df[df['ANOMALY'] == -1]['UNIT'].unique()
-    # normal_units = [
-    #     unit for unit in df['UNIT'].unique() if unit not in anomalous_units
-    # ]
-    # most_anomalous_units = df[df['ANOMALY'] ==
-    #                           -1]['UNIT'].value_counts().index[:5]
-    # for unit in most_anomalous_units:
-    #     Plotter.plot_anomalies_per_unit_feature(df,
-    #                                             unit=unit,
-    #                                             feature='M4 ANGLE')
-    # normal_unit = random.choice(normal_units)
-    # for feature in ENGINEERED_FEATURES + PRESSURE_TEMPERATURE_FEATURES:
-    #     Plotter.plot_anomalies_per_unit_feature(df,
-    #                                             unit=1,
-    #                                             feature=feature)
-    #     Plotter.plot_unit_per_feature(df, unit=normal_unit, feature=feature)
+                                       timestamped=False,
+                                       save_predictions=False)

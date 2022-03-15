@@ -8,8 +8,8 @@ from utils.config import FEATURES_FOR_ANOMALY_DETECTION, ENGINEERED_FEATURES, PR
 st.set_page_config(layout='wide')
 uploaded_file = st.file_uploader('Upload raw data file', type=['csv'])
 if uploaded_file is not None:
-    uploaded_df = DataReader.read_newcoming_data(uploaded_file)
-    df = Preprocessor.remove_step_zero(uploaded_df)
+    df = DataReader.read_newcoming_data(uploaded_file)
+    df = Preprocessor.remove_step_zero(df)
     df = Preprocessor.feature_engineering(df)
     col1, col2 = st.columns(2)
     with col1:
@@ -23,14 +23,6 @@ if uploaded_file is not None:
                             feature=feature,
                             save=False,
                             show=False))
-        if st.button('Plot engineered data'):
-            for feature in ENGINEERED_FEATURES:
-                st.plotly_chart(
-                    Plotter.plot_unit_per_test_feature(df,
-                                                       unit=df.iloc[0]['UNIT'],
-                                                       feature=feature,
-                                                       save=False,
-                                                       show=False))
     with col2:
         algorithm = st.selectbox(
             'Select algorithm', (None, 'IsolationForest', 'LocalOutlierFactor',
@@ -47,16 +39,12 @@ if uploaded_file is not None:
                         -1, 1))
                     x = create_sequences(scaled_data, time_steps=TIME_STEPS)
                     pred = detector.predict(x)
-                    # df.loc[TIME_STEPS - 1:,
-                    #        f'ANOMALY_{feature}'] = pred.reshape(-1)
                     threshold = ModelReader.read_model(
                         f'{algorithm}_{feature}_threshold',
                         task='anomaly_detection',
                         extension='.txt')
-
                     test_mae_loss = np.mean(np.abs(pred - x), axis=1)
                     test_mae_loss = test_mae_loss.reshape((-1))
-
                     anomalies = test_mae_loss > threshold
                     anomalous_data_indices = []
                     for data_idx in range(TIME_STEPS - 1,
