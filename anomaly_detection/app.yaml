@@ -8,3 +8,8 @@ entrypoint: streamlit run run_detector.py --server.port $PORT
 
 automatic_scaling:
   max_num_instances: 1
+
+resources:
+  cpu: 2
+  memory_gb: 12.0
+  disk_size_gb: 13

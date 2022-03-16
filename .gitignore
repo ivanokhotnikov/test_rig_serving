@@ -1,6 +1,8 @@
 __pycache__*
 data/*
 anomaly_detection/models*
+anomaly_detection/venv*
 forecasting/models*
+forecasting/venv*
 *.csv
 *.xlsx
