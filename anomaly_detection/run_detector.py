@@ -67,6 +67,6 @@ if uploaded_file is not None:
                             show=False))
                 except:
                     st.write(
-                        f'No anomalies found in {df.iloc[0]["UNIT"]} for {feature}'
+                        f'No anomalies found in unit {df.iloc[0]["UNIT"]} for {feature} with {algorithm}'
                     )
                     continue

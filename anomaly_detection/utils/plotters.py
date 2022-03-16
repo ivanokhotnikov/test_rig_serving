@@ -1,8 +1,5 @@
 import os
-import numpy as np
-import seaborn as sns
 import streamlit as st
-import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -136,44 +133,6 @@ class Plotter:
         return fig
 
     @staticmethod
-    def plot_covariance(df, save=False):
-        plt.figure(figsize=(10, 10))
-        sns.heatmap(df[FEATURES_NO_TIME_AND_COMMANDS].cov(),
-                    cmap='RdYlBu_r',
-                    linewidths=.5,
-                    square=True,
-                    cbar=False)
-        if save:
-            print(f'Saving covariance figure')
-            plt.tight_layout()
-            plt.savefig(os.path.join(IMAGES_PATH, 'covariance'),
-                        format='png',
-                        dpi=300)
-
-        plt.show()
-
-    @staticmethod
-    def plot_conf_matrix(cm, clf_name, save=False):
-        np.fill_diagonal(cm, 0)
-        plt.figure(figsize=(18, 18))
-        sns.heatmap(cm,
-                    annot=True,
-                    linewidths=.5,
-                    square=True,
-                    cbar=False,
-                    fmt='d')
-        plt.ylabel('True step')
-        plt.xlabel('Predicted step')
-        if save:
-            print(f'Saving confusion matrix figure')
-            plt.tight_layout()
-            plt.savefig(os.path.join(IMAGES_PATH,
-                                     f'confusion_matrix_{clf_name}'),
-                        format='png',
-                        dpi=300)
-        plt.show()
-
-    @staticmethod
     def plot_all_per_step_feature(df,
                                   step=18,
                                   feature='M4 ANGLE',
@@ -261,25 +220,6 @@ class Plotter:
                               title=f'Step {step}, {feature} means',
                               xaxis_title='Unit')
             fig.show()
-
-    @staticmethod
-    def plot_kdes_per_step(df, step):
-        if 'TIME' in df.columns:
-            df.drop('TIME', axis=1, inplace=True)
-        fig, axes = plt.subplots(7, 5, figsize=(15, 15))
-        axes = axes.flatten()
-        for idx, (ax, col) in enumerate(zip(axes, df.columns)):
-            sns.kdeplot(data=df[df['STEP'] == step],
-                        x=col,
-                        fill=True,
-                        ax=ax,
-                        warn_singular=False)
-            ax.set_yticks([])
-            ax.set_ylabel('')
-            ax.spines[['top', 'left', 'right']].set_visible(False)
-        fig.suptitle(f'STEP {step}')
-        fig.tight_layout()
-        plt.show()
 
     @staticmethod
     @st.cache(allow_output_mutation=True, suppress_st_warning=True)
@@ -399,66 +339,3 @@ class Plotter:
                 fig.show()
                 return None
             return fig
-
-    @staticmethod
-    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
-    def plot_seasonal_decomposition_per_feature(df,
-                                                period=5400,
-                                                feature='M4 ANGLE',
-                                                show=True):
-        from statsmodels.tsa.seasonal import seasonal_decompose
-        additive_decomposition = seasonal_decompose(df[feature],
-                                                    model='additive',
-                                                    period=period)
-
-        fig = go.Figure()
-        fig.add_scatter(x=df['RUNNING TIME'], y=df[feature], name='original')
-        fig.add_scatter(x=df['RUNNING TIME'],
-                        y=additive_decomposition.trend,
-                        name='trend')
-        fig.add_scatter(x=df['RUNNING TIME'],
-                        y=additive_decomposition.seasonal,
-                        name='seasonal')
-        fig.add_scatter(x=df['RUNNING TIME'],
-                        y=additive_decomposition.resid,
-                        name='residuals')
-        fig.update_layout(template='none',
-                          xaxis_title='RUNNING TIME',
-                          yaxis_title=feature)
-        if show:
-            fig.show()
-            return None
-        return fig
-
-
-if __name__ == '__main__':
-    import pandas as pd
-    from readers import DataReader, Preprocessor
-    from config import PREDICTIONS_PATH
-
-    print(os.getcwd())
-    os.chdir('..\\..\\..')
-    print(os.getcwd())
-    data = DataReader.load_data()
-    data = Preprocessor.remove_step_zero(data)
-    data['ANOMALY'] = pd.read_csv(
-        os.path.join(PREDICTIONS_PATH, 'IsolationForest_0212_1742.csv'))
-    Plotter.plot_unit_raw_data(data, unit=91, in_time=False, save=False)
-    Plotter.plot_unit_from_summary_file(unit_id='HYD000091-R1')
-    Plotter.plot_covariance(data)
-    Plotter.plot_all_per_step_feature(data, single_plot=False)
-    Plotter.plot_all_per_step(data, step=18)
-    Plotter.plot_all_means_per_step(data, step=18)
-    Plotter.plot_kdes_per_step(data, step=18)
-    Plotter.plot_unit_per_step_feature(data,
-                                       unit=91,
-                                       step=23,
-                                       feature='M4 ANGLE')
-    Plotter.plot_unit_per_feature(data, unit=91, feature='M4 ANGLE')
-    Plotter.plot_anomalies_per_unit_feature(data, unit=91, feature='M4 ANGLE')
-    params = {'unit': 18, 'step': 12, 'test': 2}
-    for feature in FEATURES_NO_TIME_AND_COMMANDS:
-        Plotter.plot_anomalies_per_unit_test_step_feature(data,
-                                                          feature=feature,
-                                                          show=True,
-                                                          **params)

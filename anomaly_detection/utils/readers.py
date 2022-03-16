@@ -5,7 +5,7 @@ import streamlit as st
 
 from tensorflow import keras
 
-from .config import (FEATURES_FOR_ANOMALY_DETECTION, FEATURES_FOR_FORECASTING,
+from .config import (FEATURES_FOR_ANOMALY_DETECTION, 
                      FEATURES_NO_TIME, FEATURES_NO_TIME_AND_COMMANDS,
                      MODELS_PATH, DATA_PATH, PREDICTIONS_PATH, TIME_STEPS)
 from joblib import load
@@ -219,14 +219,6 @@ class DataReader:
 
 
 class Preprocessor:
-
-    @staticmethod
-    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
-    def remove_outliers(df, zscore=3):
-        from scipy import stats
-        return df[(np.abs(stats.zscore(df[FEATURES_NO_TIME])) < zscore).all(
-            axis=1)]
-
     @staticmethod
     def remove_step_zero(df):
         return df.drop(df[df['STEP'] == 0].index,
