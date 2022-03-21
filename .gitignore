@@ -1,8 +1,11 @@
 __pycache__*
+.vscode/*
 data/*
 anomaly_detection/models*
 anomaly_detection/venv*
+anomaly_detection/.vscode*
 forecasting/models*
 forecasting/venv*
+forecasting/.vscode*
 *.csv
 *.xlsx
