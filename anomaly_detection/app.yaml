@@ -1,15 +1,8 @@
-runtime: python
+runtime: custom
 env: flex
-
-runtime_config:
-  python_version: 3
-
-entrypoint: streamlit run run_detector.py --server.port $PORT
-
-automatic_scaling:
-  max_num_instances: 1
-
+manual_scaling:
+  instances: 1
 resources:
   cpu: 2
   memory_gb: 12.0
-  disk_size_gb: 13
+  disk_size_gb: 15
