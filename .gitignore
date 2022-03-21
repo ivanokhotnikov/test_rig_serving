@@ -4,8 +4,10 @@ data/*
 anomaly_detection/models*
 anomaly_detection/venv*
 anomaly_detection/.vscode*
+anomaly_detection/.devcontainer*
 forecasting/models*
 forecasting/venv*
 forecasting/.vscode*
+forecasting/.devcontainer*
 *.csv
 *.xlsx
