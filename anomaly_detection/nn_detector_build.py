@@ -34,7 +34,7 @@ def create_sequences(values, time_steps=TIME_STEPS):
 
 
 if __name__ == '__main__':
-    df = get_preprocessed_data(raw=False)
+    df = get_preprocessed_data(raw=True)
     test_lengths = []
     step_lengths = []
     for unit in df['UNIT'].unique():
@@ -183,7 +183,7 @@ if __name__ == '__main__':
             if np.all(anomalies[data_idx - TIME_STEPS + 1:data_idx]):
                 anomalous_data_indices.append(data_idx)
 
-        df.loc[:,f'ANOMALY_{feature}'] = 1
+        df.loc[:, f'ANOMALY_{feature}'] = 1
         df.loc[anomalous_data_indices, f'ANOMALY_{feature}'] = -1
 
         plt.figure(figsize=(15, 5))

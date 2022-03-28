@@ -5,9 +5,9 @@ import streamlit as st
 
 from tensorflow import keras
 
-from .config import (FEATURES_FOR_ANOMALY_DETECTION, 
-                     FEATURES_NO_TIME, FEATURES_NO_TIME_AND_COMMANDS,
-                     MODELS_PATH, DATA_PATH, PREDICTIONS_PATH, TIME_STEPS)
+from .config import (FEATURES_FOR_ANOMALY_DETECTION, FEATURES_NO_TIME,
+                     FEATURES_NO_TIME_AND_COMMANDS, MODELS_PATH, DATA_PATH,
+                     PREDICTIONS_PATH, TIME_STEPS)
 from joblib import load
 
 
@@ -66,25 +66,16 @@ class DataReader:
                 print(f'Reading {file}')
             try:
                 if file.endswith('.csv'):
-                    current_df = pd.read_csv(
-                        os.path.join(DATA_PATH, 'raw', file),
-                        usecols=features_to_read,
-                        index_col=False,
-                        parse_dates=['TIME'],
-                        dtype=dict(
-                            zip(FEATURES_NO_TIME_AND_COMMANDS, [np.float32] *
-                                len(FEATURES_NO_TIME_AND_COMMANDS))),
-                        header=0)
+                    current_df = pd.read_csv(os.path.join(
+                        DATA_PATH, 'raw', file),
+                                             usecols=features_to_read,
+                                             infer_datetime_format=True,
+                                             index_col=False)
                 elif file.endswith('.xlsx'):
-                    current_df = pd.read_excel(
-                        os.path.join(DATA_PATH, 'raw', file),
-                        usecols=features_to_read,
-                        index_col=False,
-                        parse_dates=['TIME'],
-                        dtype=dict(
-                            zip(FEATURES_NO_TIME_AND_COMMANDS, [np.float32] *
-                                len(FEATURES_NO_TIME_AND_COMMANDS))),
-                        header=0)
+                    current_df = pd.read_excel(os.path.join(
+                        DATA_PATH, 'raw', file),
+                                               usecols=features_to_read,
+                                               index_col=False)
             except ValueError:
                 if verbose:
                     print(f'{file} got a faulty header')
@@ -219,6 +210,7 @@ class DataReader:
 
 
 class Preprocessor:
+
     @staticmethod
     def remove_step_zero(df):
         return df.drop(df[df['STEP'] == 0].index,
