@@ -1,9 +1,11 @@
 import os
 
+import time
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from joblib import dump, load
+from colorama import Fore
 from statsmodels.tsa.seasonal import seasonal_decompose, STL
 from statsmodels.tsa.api import ExponentialSmoothing, SimpleExpSmoothing, Holt
 
@@ -15,11 +17,14 @@ if __name__ == '__main__':
                                features_to_read=FEATURES_FOR_FORECASTING)
     plot_all = False
     plot_only_trends = True
-    methods = ('seasonal_decompose', 'stl')
+    save = False
+    methods = ['seasonal_decompose']
     features = ENGINEERED_FEATURES + PRESSURE_TEMPERATURE + VIBRATIONS
     for method in methods:
+        start_all = time.time()
         for feature in features:
-            print(f'Decomposing {feature} with {method}')
+            print(Fore.GREEN + f'Decomposing {feature} with {method}')
+            start = time.time()
             if method == 'seasonal_decompose':
                 decomposition = seasonal_decompose(
                     df[feature],
@@ -31,11 +36,17 @@ if __name__ == '__main__':
                     df[feature],
                     period=3600,
                 ).fit()
-            print(f'Saving decomposition for {feature}')
-            dump(
-                decomposition,
-                os.path.join(MODELS_PATH,
-                             f'{feature}_{method}_decomposer.joblib'))
+            end = time.time()
+            print(Fore.BLUE + f'Decomposition took {end - start:.2f} seconds')
+            if save:
+                start = time.time()
+                print(Fore.GREEN + f'Saving decomposition for {feature}')
+                dump(
+                    decomposition,
+                    os.path.join(MODELS_PATH,
+                                f'{feature}_{method}_decomposer.joblib'))
+                end = time.time()
+                print(Fore.BLUE + f'Saving took {end - start:.2f} seconds')
             if plot_all:
                 for plot in ('observed', 'trend', 'seasonal', 'resid'):
                     fig = go.Figure(
@@ -52,9 +63,17 @@ if __name__ == '__main__':
                                 name='observed',
                                 line=dict(color='gray', width=.5))
                 fig.add_scatter(x=df['DURATION'],
-                                y=getattr(decomposition, 'trend'),
-                                name='trend')
+                                y=getattr(decomposition, '_trend'),
+                                name='stats_trend')
+                fig.add_scatter(x=df['DURATION'],
+                                y=df[feature].rolling(3600).mean(),
+                                name='pandas ma')
                 fig.update_layout(yaxis_title=feature,
                                   xaxis_title='DURATION',
                                   template='none')
                 fig.show()
+        end_all = time.time()
+        print(
+            Fore.BLUE +
+            f'Total time for {method} decomposition and saving: {end_all - start_all:.2f} seconds'
+        )
