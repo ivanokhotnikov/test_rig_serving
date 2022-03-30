@@ -5,19 +5,41 @@ import streamlit as st
 
 from tensorflow import keras
 
-from .config import (DATA_PATH, MODELS_PATH, FEATURES_FOR_FORECASTING,
-                     FEATURES_NO_TIME, FEATURES_NO_TIME_AND_COMMANDS,
-                     PREDICTIONS_PATH, TIME_STEPS)
+from .config import (DATA_PATH, LOCAL_DATA_PATH, MODELS_PATH, FEATURES_NO_TIME,
+                     PREDICTIONS_PATH, TIME_STEPS, FORECAST_FEATURES,
+                     TIME_FEATURES, RAW_FORECAST_FEATURES)
 from joblib import load
 
 
-def read_data(raw=False, features_to_read=FEATURES_FOR_FORECASTING):
+def read_data(raw=False, features_to_read=RAW_FORECAST_FEATURES):
     if raw:
         print(f'Reading raw data from {DATA_PATH}\\raw\\')
         df = DataReader.read_all_raw_data(features_to_read=features_to_read)
-        df = Preprocessor.remove_step_zero(df)
     else:
-        print(f'Reading preprocessed data from {DATA_PATH}\\processed\\')
+        df.sort_values(by=[' DATE', 'TIME'], inplace=True, ignore_index=True)
+    df['DURATION'] = pd.to_timedelta(range(len(df)), unit='s')
+    df['TOTAL SECONDS'] = (pd.to_timedelta(range(
+        len(df)), unit='s').total_seconds()).astype(np.uint64)
+    df['RUNNING HOURS'] = (df['TOTAL SECONDS'] / 3600).astype(np.float64)
+    return df
+
+
+def get_processed_data(raw=False,
+                       local=True,
+                       features_to_read=RAW_FORECAST_FEATURES, verbose=False):
+    if local:
+        if verbose:
+            print(f'Reading processed local data from {LOCAL_DATA_PATH}\\')
+        df = pd.read_csv(os.path.join(LOCAL_DATA_PATH, 'forecast_data.csv'))
+        df[FORECAST_FEATURES] = df[FORECAST_FEATURES].apply(pd.to_numeric,
+                                                            errors='coerce',
+                                                            downcast='float')
+        if verbose:
+            print('Reading done!')
+        return df
+    if not raw:
+        if verbose:
+            print(f'Reading processed data from {DATA_PATH}\\processed\\')
         df = pd.read_csv(os.path.join(DATA_PATH, 'processed',
                                       'combined_timed_data.csv'),
                          parse_dates=True,
@@ -30,21 +52,21 @@ def read_data(raw=False, features_to_read=FEATURES_FOR_FORECASTING):
                              'ARMANI']].astype(np.uint8)
         df['TIME'] = pd.to_datetime(df['TIME'])
         df[' DATE'] = pd.to_datetime(df[' DATE'])
-    df.sort_values(by=[' DATE', 'TIME'], inplace=True, ignore_index=True)
+        df[FORECAST_FEATURES] = df[FORECAST_FEATURES].apply(pd.to_numeric,
+                                                            errors='coerce',
+                                                            downcast='float')
+        if verbose:
+            print('Reading done!')
+        return df
+    df = DataReader.read_all_raw_data(features_to_read=features_to_read)
+    df = Preprocessor.remove_step_zero(df)
+    df['TIME'] = pd.to_datetime(range(len(df)),
+                                unit='s',
+                                origin=f'{df[" DATE"].min()} 00:00:00')
     df['DURATION'] = pd.to_timedelta(range(len(df)), unit='s')
     df['TOTAL SECONDS'] = (pd.to_timedelta(range(
-        len(df)), unit='s').total_seconds()).astype(np.uint32)
-    df['RUNNING HOURS'] = (df['TOTAL SECONDS'] / 3600).astype(np.float16)
-    # df['HOURS'] = (df['TOTAL SECONDS'] // 3600).astype(np.uint16)
-    # df['MINUTES'] = (df['TOTAL SECONDS'] % 3600 // 60).astype(np.uint8)
-    # df['SECONDS'] = (df['TOTAL SECONDS'] % 60).astype(np.uint8)
-    return df
-
-
-def get_preprocessed_data(raw=False,
-                          features_to_read=FEATURES_FOR_FORECASTING):
-    df = read_data(raw=raw, features_to_read=features_to_read)
-    df = Preprocessor.remove_step_zero(df)
+        len(df)), unit='s').total_seconds()).astype(np.uint64)
+    df['RUNNING HOURS'] = (df['TOTAL SECONDS'] / 3600).astype(np.float64)
     df = Preprocessor.feature_engineering(df)
     return df
 
@@ -59,7 +81,8 @@ def create_sequences(values, time_steps=TIME_STEPS):
 class DataReader:
 
     @staticmethod
-    def read_all_raw_data(features_to_read=FEATURES_FOR_FORECASTING):
+    def read_all_raw_data(features_to_read=RAW_FORECAST_FEATURES):
+        print(f'Reading raw data from {DATA_PATH}\\raw\\')
         current_df = pd.DataFrame()
         final_df = pd.DataFrame()
         units = []
@@ -99,12 +122,13 @@ class DataReader:
             current_df[' DATE'] = pd.to_datetime(current_df[' DATE'],
                                                  errors='coerce')
             final_df = pd.concat((final_df, current_df), ignore_index=True)
+            final_df.sort_values(by=[' DATE', 'TIME'], inplace=True, ignore_index=True)
         print('Reading done!')
         return final_df
 
     @staticmethod
     def read_raw_unit_data(unit='HYD000091-R1_RAW',
-                           features_to_read=FEATURES_FOR_FORECASTING):
+                           features_to_read=RAW_FORECAST_FEATURES):
         try:
             unit_df = pd.read_csv(os.path.join(DATA_PATH, 'raw',
                                                unit + '.csv'),
@@ -129,7 +153,7 @@ class DataReader:
         print('Reading "combined_data.csv"')
         df = pd.read_csv(os.path.join(DATA_PATH, 'processed',
                                       'combined_timed_data.csv'),
-                         usecols=FEATURES_FOR_FORECASTING,
+                         usecols=RAW_FORECAST_FEATURES,
                          dtype=dict(
                              zip(FEATURES_NO_TIME,
                                  [np.float32] * len(FEATURES_NO_TIME))),
@@ -170,7 +194,7 @@ class DataReader:
                   raw=False,
                   unit=None,
                   verbose=True,
-                  features_to_read=FEATURES_FOR_FORECASTING):
+                  features_to_read=RAW_FORECAST_FEATURES):
         if read_all:
             if raw:
                 return cls.read_all_raw_data(features_to_read=features_to_read)
@@ -186,7 +210,7 @@ class DataReader:
     @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def read_newcoming_data(csv_file):
         df = pd.read_csv(csv_file,
-                         names=FEATURES_FOR_FORECASTING,
+                         names=RAW_FORECAST_FEATURES,
                          index_col=False)
         df[FEATURES_NO_TIME] = df[FEATURES_NO_TIME].apply(pd.to_numeric,
                                                           errors='coerce',
@@ -289,7 +313,7 @@ class ModelReader:
 
 
 if __name__ == '__main__':
-    raw_data_df = get_preprocessed_data(
-        raw=True, features_to_read=FEATURES_FOR_FORECASTING)
-    combined_data_df = get_preprocessed_data(
-        raw=False, features_to_read=FEATURES_FOR_FORECASTING)
+    raw_data_df = get_processed_data(raw=True,
+                                     features_to_read=RAW_FORECAST_FEATURES)
+    combined_data_df = get_processed_data(
+        raw=False, features_to_read=RAW_FORECAST_FEATURES)
