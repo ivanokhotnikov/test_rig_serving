@@ -1,12 +1,45 @@
 import os
-import numpy as np
-import seaborn as sns
 import streamlit as st
-import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from .config import ENGINEERED_FEATURES, IMAGES_PATH, FEATURES_NO_TIME_AND_COMMANDS, PRESSURE_TEMPERATURE_FEATURES
+from .config import ENGINEERED_FEATURES, IMAGES_PATH, FEATURES_NO_TIME_AND_COMMANDS, PRESSURE_TEMPERATURE
+
+
+def plot_ma_trend(df, feature, window, show=False):
+    fig = go.Figure()
+    fig.add_scatter(x=df['TIME'],
+                    y=df[feature],
+                    name='Observed',
+                    line=dict(color='lightgray', width=.25))
+    fig.add_scatter(x=df['TIME'],
+                    y=df[feature].rolling(window).mean(),
+                    name='Moving average',
+                    line=dict(color='orange', width=1.5))
+    fig.update_layout(yaxis_title=feature,
+                      xaxis_title='TIME',
+                      template='none',
+                      legend=dict(orientation='h',
+                                  yanchor='bottom',
+                                  xanchor='right',
+                                  x=1,
+                                  y=1.01))
+    if show:
+        fig.show()
+        return None
+    return fig
+
+
+def plot_heatmap(df, features, show=False):
+    fig = go.Figure(
+        go.Heatmap(x=features,
+                   y=features,
+                   z=df[features].cov().values,
+                   colorscale='inferno'))
+    if show:
+        fig.show()
+        return None
+    return fig
 
 
 class Plotter:
@@ -136,44 +169,6 @@ class Plotter:
         return fig
 
     @staticmethod
-    def plot_covariance(df, save=False):
-        plt.figure(figsize=(10, 10))
-        sns.heatmap(df[FEATURES_NO_TIME_AND_COMMANDS].cov(),
-                    cmap='RdYlBu_r',
-                    linewidths=.5,
-                    square=True,
-                    cbar=False)
-        if save:
-            print(f'Saving covariance figure')
-            plt.tight_layout()
-            plt.savefig(os.path.join(IMAGES_PATH, 'covariance'),
-                        format='png',
-                        dpi=300)
-
-        plt.show()
-
-    @staticmethod
-    def plot_conf_matrix(cm, clf_name, save=False):
-        np.fill_diagonal(cm, 0)
-        plt.figure(figsize=(18, 18))
-        sns.heatmap(cm,
-                    annot=True,
-                    linewidths=.5,
-                    square=True,
-                    cbar=False,
-                    fmt='d')
-        plt.ylabel('True step')
-        plt.xlabel('Predicted step')
-        if save:
-            print(f'Saving confusion matrix figure')
-            plt.tight_layout()
-            plt.savefig(os.path.join(IMAGES_PATH,
-                                     f'confusion_matrix_{clf_name}'),
-                        format='png',
-                        dpi=300)
-        plt.show()
-
-    @staticmethod
     def plot_all_per_step_feature(df,
                                   step=18,
                                   feature='M4 ANGLE',
@@ -263,29 +258,10 @@ class Plotter:
             fig.show()
 
     @staticmethod
-    def plot_kdes_per_step(df, step):
-        if 'TIME' in df.columns:
-            df.drop('TIME', axis=1, inplace=True)
-        fig, axes = plt.subplots(7, 5, figsize=(15, 15))
-        axes = axes.flatten()
-        for idx, (ax, col) in enumerate(zip(axes, df.columns)):
-            sns.kdeplot(data=df[df['STEP'] == step],
-                        x=col,
-                        fill=True,
-                        ax=ax,
-                        warn_singular=False)
-            ax.set_yticks([])
-            ax.set_ylabel('')
-            ax.spines[['top', 'left', 'right']].set_visible(False)
-        fig.suptitle(f'STEP {step}')
-        fig.tight_layout()
-        plt.show()
-
-    @staticmethod
     @st.cache(allow_output_mutation=True, suppress_st_warning=True)
     def plot_anomalies_per_unit(df, unit=89):
         for test in df[(df['UNIT'] == unit)]['TEST'].unique():
-            for feature in ENGINEERED_FEATURES + PRESSURE_TEMPERATURE_FEATURES:
+            for feature in ENGINEERED_FEATURES + PRESSURE_TEMPERATURE:
                 Plotter.plot_anomalies_per_unit_test_feature(df,
                                                              unit=unit,
                                                              test=test,
@@ -399,36 +375,6 @@ class Plotter:
                 fig.show()
                 return None
             return fig
-
-    @staticmethod
-    @st.cache(allow_output_mutation=True, suppress_st_warning=True)
-    def plot_seasonal_decomposition_per_feature(df,
-                                                period=5400,
-                                                feature='M4 ANGLE',
-                                                show=True):
-        from statsmodels.tsa.seasonal import seasonal_decompose
-        additive_decomposition = seasonal_decompose(df[feature],
-                                                    model='additive',
-                                                    period=period)
-
-        fig = go.Figure()
-        fig.add_scatter(x=df['RUNNING TIME'], y=df[feature], name='original')
-        fig.add_scatter(x=df['RUNNING TIME'],
-                        y=additive_decomposition.trend,
-                        name='trend')
-        fig.add_scatter(x=df['RUNNING TIME'],
-                        y=additive_decomposition.seasonal,
-                        name='seasonal')
-        fig.add_scatter(x=df['RUNNING TIME'],
-                        y=additive_decomposition.resid,
-                        name='residuals')
-        fig.update_layout(template='none',
-                          xaxis_title='RUNNING TIME',
-                          yaxis_title=feature)
-        if show:
-            fig.show()
-            return None
-        return fig
 
 
 if __name__ == '__main__':
