@@ -85,7 +85,7 @@ if __name__ == '__main__':
     y_train = scaler.inverse_transform([y_train])
 
     test_predict = scaler.inverse_transform(test_predict)
-    y_test = scaler.inverse_transform([y_test])
+    y_test = scaler.inverse_transform(y_test)
 
     # Get the root mean squared error (RMSE) and MAE
     score_rmse = np.sqrt(mean_squared_error(y_test[0], test_predict[:, 0]))

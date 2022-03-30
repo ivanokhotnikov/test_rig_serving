@@ -24,9 +24,12 @@ if uploaded_file is not None:
                             save=False,
                             show=False))
     with col2:
-        algorithm = st.selectbox(
+        algorithm = st.radio(
             'Select algorithm', (None, 'IsolationForest', 'LocalOutlierFactor',
-                                 'ConvolutionalAutoencoder'))
+                                 'ConvolutionalAutoencoder'),
+            help=
+            'References on isolation forest: https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.IsolationForest.html, local outlier factor: https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.LocalOutlierFactor.html, convolutional autoencoder: https://keras.io/examples/timeseries/timeseries_anomaly_detection/',
+            index=0)
         if algorithm is not None:
             for feature in ENGINEERED_FEATURES + PRESSURE_TEMPERATURE_FEATURES:
                 detector = ModelReader.read_model(f'{algorithm}_{feature}',
