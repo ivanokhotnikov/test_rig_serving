@@ -272,7 +272,12 @@ class Plotter:
             )
             fig.update_layout(yaxis={'title': feature},
                               template='none',
-                              title=f'Unit {unit}-{test}, {feature}')
+                              title=f'Unit {unit}-{test}, {feature}',
+                              legend=dict(orientation='h',
+                                          yanchor='bottom',
+                                          xanchor='right',
+                                          x=1,
+                                          y=1.01))
             if show:
                 fig.show()
                 return None
@@ -315,7 +320,12 @@ class Plotter:
                     line={'color': 'indianred'})
                 fig.update_layout(yaxis={'title': feature},
                                   template='none',
-                                  title=f'Unit {unit}-{test}, step {step}')
+                                  title=f'Unit {unit}-{test}, step {step}',
+                                  legend=dict(orientation='h',
+                                              yanchor='bottom',
+                                              xanchor='right',
+                                              x=1,
+                                              y=1.01))
                 if show:
                     fig.show()
                 return fig
