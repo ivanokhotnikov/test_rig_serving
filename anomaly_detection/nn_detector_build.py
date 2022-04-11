@@ -1,21 +1,18 @@
 import os
-import pandas as pd
-import numpy as np
+
 import matplotlib.pyplot as plt
-from joblib import dump, load
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
-
-from tensorflow import keras
+import numpy as np
+import pandas as pd
+from joblib import dump
 from keras import layers
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from tensorflow import keras
 
-from utils.config import (MODELS_PATH, PREDICTIONS_PATH, SEED, VERBOSITY,
-                          FEATURES_NO_TIME_AND_COMMANDS, ENGINEERED_FEATURES,
-                          PRESSURE_TEMPERATURE_FEATURES,
-                          FEATURES_FOR_ANOMALY_DETECTION, TIME_STEPS,
-                          EARLY_STOPPING)
+from utils.config import (EARLY_STOPPING, ENGINEERED_FEATURES,
+                          FEATURES_FOR_ANOMALY_DETECTION, MODELS_PATH,
+                          PRESSURE_TEMPERATURE_FEATURES, TIME_STEPS, VERBOSITY)
 from utils.readers import DataReader, Preprocessor
-from utils.plotters import Plotter
 
 
 def get_preprocessed_data(raw=False,
@@ -68,10 +65,7 @@ if __name__ == '__main__':
         scaler = StandardScaler()
         scaled_train_data = scaler.fit_transform(
             train_data.values.reshape(-1, 1))
-        dump(
-            scaler,
-            os.path.join(MODELS_PATH, 'anomaly_detectors',
-                         f'{model}_scaler.joblib'))
+        dump(scaler, os.path.join(MODELS_PATH, f'{model}_scaler.joblib'))
 
         x_train = create_sequences(scaled_train_data.reshape(-1, 1))
         print(x_train.shape)
@@ -79,24 +73,24 @@ if __name__ == '__main__':
         detector = keras.Sequential([
             layers.Input(shape=(x_train.shape[1], x_train.shape[2])),
             layers.Conv1D(filters=32,
-                          kernel_size=6,
+                          kernel_size=18,
                           padding='same',
                           strides=2,
                           activation='relu'),
             layers.Dropout(rate=0.25),
             layers.Conv1D(filters=16,
-                          kernel_size=6,
+                          kernel_size=18,
                           padding='same',
                           strides=2,
                           activation='relu'),
             layers.Conv1DTranspose(filters=16,
-                                   kernel_size=6,
+                                   kernel_size=18,
                                    padding='same',
                                    strides=2,
                                    activation='relu'),
             layers.Dropout(rate=0.25),
             layers.Conv1DTranspose(filters=32,
-                                   kernel_size=6,
+                                   kernel_size=18,
                                    padding='same',
                                    strides=2,
                                    activation='relu'),
@@ -130,8 +124,7 @@ if __name__ == '__main__':
             ])
 
         trained_detectors.append(detector)
-        detector.save(
-            os.path.join(MODELS_PATH, 'anomaly_detectors', f'{model}.h5'))
+        detector.save(os.path.join(MODELS_PATH, f'{model}.h5'))
 
         plt.plot(history.history['loss'], label='Training Loss')
         plt.plot(history.history['val_loss'], label='Validation Loss')
@@ -150,9 +143,8 @@ if __name__ == '__main__':
         # Get reconstruction loss threshold.
         threshold = np.percentile(train_mae_loss, q=95)
         print('Reconstruction error threshold: ', threshold)
-        with open(
-                os.path.join(MODELS_PATH, 'anomaly_detectors',
-                             f'{model}_threshold.txt'), 'w+') as f:
+        with open(os.path.join(MODELS_PATH, f'{model}_threshold.txt'),
+                  'w+') as f:
             f.write(str(threshold)),
 
         scaled_test_data = scaler.transform(test_data.values.reshape(-1, 1))
