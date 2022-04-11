@@ -1,32 +1,32 @@
+import gc
 import os
+
 import numpy as np
 import pandas as pd
 import streamlit as st
-
+from joblib import load
 from tensorflow import keras
 
-from .config import (DATA_PATH, LOCAL_DATA_PATH, MODELS_PATH, FEATURES_NO_TIME,
-                     PREDICTIONS_PATH, TIME_STEPS, FORECAST_FEATURES,
-                     TIME_FEATURES, RAW_FORECAST_FEATURES)
-from joblib import load
+from utils.config import (DATA_PATH, FEATURES_NO_TIME, FORECAST_FEATURES,
+                          LOCAL_DATA_PATH, MODELS_PATH, PREDICTIONS_PATH,
+                          RAW_FORECAST_FEATURES, TIME_FEATURES, TIME_STEPS)
 
 
-def read_data(raw=False, features_to_read=RAW_FORECAST_FEATURES):
-    if raw:
-        print(f'Reading raw data from {DATA_PATH}\\raw\\')
-        df = DataReader.read_all_raw_data(features_to_read=features_to_read)
-    else:
-        df.sort_values(by=[' DATE', 'TIME'], inplace=True, ignore_index=True)
-    df['DURATION'] = pd.to_timedelta(range(len(df)), unit='s')
+def get_ma_data():
+    df = pd.read_csv(os.path.join(LOCAL_DATA_PATH, 'forecast_ma_data.csv'))
     df['TOTAL SECONDS'] = (pd.to_timedelta(range(
         len(df)), unit='s').total_seconds()).astype(np.uint64)
-    df['RUNNING HOURS'] = (df['TOTAL SECONDS'] / 3600).astype(np.float64)
+    df['TIME'] = pd.to_datetime(range(len(df)),
+                                unit='s',
+                                origin='23-02-2021 00:00:00')
+    df = df.apply(pd.to_numeric, errors='coerce', downcast='float')
     return df
 
 
 def get_processed_data(raw=False,
                        local=True,
-                       features_to_read=RAW_FORECAST_FEATURES, verbose=False):
+                       features_to_read=RAW_FORECAST_FEATURES,
+                       verbose=False):
     if local:
         if verbose:
             print(f'Reading processed local data from {LOCAL_DATA_PATH}\\')
@@ -83,7 +83,6 @@ class DataReader:
     @staticmethod
     def read_all_raw_data(features_to_read=RAW_FORECAST_FEATURES):
         print(f'Reading raw data from {DATA_PATH}\\raw\\')
-        current_df = pd.DataFrame()
         final_df = pd.DataFrame()
         units = []
         for file in os.listdir(os.path.join(DATA_PATH, 'raw')):
@@ -95,34 +94,39 @@ class DataReader:
                                              usecols=features_to_read,
                                              infer_datetime_format=True,
                                              index_col=False)
-                elif file.endswith('.xlsx'):
+                elif file.endswith('.xlsx') or file.endswith('.xls'):
                     current_df = pd.read_excel(os.path.join(
                         DATA_PATH, 'raw', file),
                                                usecols=features_to_read,
                                                index_col=False)
-            except ValueError:
+            except:
                 print(f'Can\'t read {file}')
                 continue
             current_df[FEATURES_NO_TIME] = current_df[FEATURES_NO_TIME].apply(
                 pd.to_numeric, errors='coerce', downcast='float')
-            current_df.dropna(inplace=True)
-            name_list = file.split('-')
-            try:
-                unit = np.uint8(name_list[0][-3:].lstrip('0D'))
-            except ValueError:
-                unit = np.uint8(name_list[0].split('_')[0][-3:].lstrip('0D'))
-            units.append(unit)
-            current_df['ARMANI'] = 1 if name_list[0][3] == '2' else 0
-            current_df['ARMANI'] = current_df['ARMANI'].astype(np.uint8)
-            current_df['UNIT'] = unit
-            current_df['TEST'] = np.uint8(units.count(unit))
-            current_df['STEP'] = current_df['STEP'].astype(np.uint8)
-            current_df['TIME'] = pd.to_datetime(current_df['TIME'],
-                                                errors='coerce').dt.time
-            current_df[' DATE'] = pd.to_datetime(current_df[' DATE'],
-                                                 errors='coerce')
-            final_df = pd.concat((final_df, current_df), ignore_index=True)
-            final_df.sort_values(by=[' DATE', 'TIME'], inplace=True, ignore_index=True)
+            if len(current_df['STEP'].unique()) == 36:
+                current_df.dropna(inplace=True)
+                name_list = file.split('-')
+                try:
+                    unit = np.uint8(name_list[0][-3:].lstrip('0D'))
+                except ValueError:
+                    unit = np.uint8(name_list[0].split('_')[0][-3:].lstrip('0D'))
+                units.append(unit)
+                current_df['ARMANI'] = 1 if name_list[0][3] == '2' else 0
+                current_df['ARMANI'] = current_df['ARMANI'].astype(np.uint8)
+                current_df['UNIT'] = unit
+                current_df['TEST'] = np.uint8(units.count(unit))
+                current_df['STEP'] = current_df['STEP'].astype(np.uint8)
+                current_df['TIME'] = pd.to_datetime(current_df['TIME'],
+                                                    errors='coerce').dt.time
+                current_df[' DATE'] = pd.to_datetime(current_df[' DATE'],
+                                                    errors='coerce')
+                final_df = pd.concat((final_df, current_df), ignore_index=True)
+            del current_df
+            gc.collect()
+        final_df.sort_values(by=[' DATE', 'TIME'],
+                                inplace=True,
+                                ignore_index=True)
         print('Reading done!')
         return final_df
 

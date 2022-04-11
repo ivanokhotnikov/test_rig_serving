@@ -5,7 +5,7 @@ from utils.plotters import plot_heatmap, plot_ma_trend
 
 if __name__ == '__main__':
     df = get_processed_data(raw=False,
-                            local=False,
+                            local=True,
                             features_to_read=RAW_FORECAST_FEATURES)
     if st.button('Plot trends with moving average'):
         window = st.number_input('Window size, seconds',
@@ -14,6 +14,8 @@ if __name__ == '__main__':
                                  max_value=5000,
                                  step=1)
         for feature in FORECAST_FEATURES:
-            st.plotly_chart(plot_ma_trend(df, feature, window, show=False))
+            st.plotly_chart(plot_ma_trend(df, feature, window, show=False),
+                            use_container_width=True)
     if st.button('Plot heatmap of features'):
-        st.plotly_chart(plot_heatmap(df, FORECAST_FEATURES, show=False))
+        st.plotly_chart(plot_heatmap(df, FORECAST_FEATURES, show=False),
+                        use_container_width=True)

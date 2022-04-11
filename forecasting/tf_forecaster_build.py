@@ -86,11 +86,9 @@ if __name__ == '__main__':
 
     local = True
     if local:
-        df = get_processed_data(local=True,
-                                   features_to_read=FORECAST_FEATURES)
+        df = get_processed_data(local=True, features_to_read=FORECAST_FEATURES)
     else:
-        df = get_processed_data(raw=False,
-                                   features_to_read=FORECAST_FEATURES)
+        df = get_processed_data(raw=False, features_to_read=FORECAST_FEATURES)
 
     window = 3600
     column_indices = {name: i for i, name in enumerate(FORECAST_FEATURES)}
@@ -113,5 +111,3 @@ if __name__ == '__main__':
     plt.figure(figsize=(12, 6))
     ax = sns.violinplot(x='Column', y='Normalized', data=df_std)
     _ = ax.set_xticklabels(df.keys(), rotation=90)
-
-    # WindowGenerator.split_window = split_window
