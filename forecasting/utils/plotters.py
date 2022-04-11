@@ -6,16 +6,22 @@ from plotly.subplots import make_subplots
 from .config import ENGINEERED_FEATURES, IMAGES_PATH, FEATURES_NO_TIME_AND_COMMANDS, PRESSURE_TEMPERATURE
 
 
-def plot_ma_trend(df, feature, window, show=False):
+def plot_ma_trend(df, feature, window, show=False, ma_df=None):
     fig = go.Figure()
     fig.add_scatter(x=df['TIME'],
                     y=df[feature],
                     name='Observed',
                     line=dict(color='lightgray', width=.25))
-    fig.add_scatter(x=df['TIME'],
-                    y=df[feature].rolling(window).mean(),
-                    name='Moving average',
-                    line=dict(color='orange', width=1.5))
+    if ma_df is not None:
+        fig.add_scatter(x=df['TIME'],
+                        y=ma_df[f'MA {feature}'],
+                        name='Moving average',
+                        line=dict(color='orange', width=1.5))
+    else:
+        fig.add_scatter(x=df['TIME'],
+                        y=df[feature].rolling(window).mean(),
+                        name='Moving average',
+                        line=dict(color='orange', width=1.5))
     fig.update_layout(yaxis_title=feature,
                       xaxis_title='TIME',
                       template='none',
