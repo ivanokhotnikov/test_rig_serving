@@ -58,6 +58,8 @@ def get_processed_data(raw=False,
         if verbose:
             print('Reading done!')
         return df
+    if verbose:
+        print(f'Reading raw data from {DATA_PATH}\\raw\\')
     df = DataReader.read_all_raw_data(features_to_read=features_to_read)
     df = Preprocessor.remove_step_zero(df)
     df['TIME'] = pd.to_datetime(range(len(df)),
@@ -68,6 +70,8 @@ def get_processed_data(raw=False,
         len(df)), unit='s').total_seconds()).astype(np.uint64)
     df['RUNNING HOURS'] = (df['TOTAL SECONDS'] / 3600).astype(np.float64)
     df = Preprocessor.feature_engineering(df)
+    if verbose:
+        print('Reading done!')
     return df
 
 
@@ -124,9 +128,12 @@ class DataReader:
                 final_df = pd.concat((final_df, current_df), ignore_index=True)
             del current_df
             gc.collect()
-        final_df.sort_values(by=[' DATE', 'TIME'],
-                                inplace=True,
-                                ignore_index=True)
+        try:
+            final_df.sort_values(by=[' DATE', 'TIME'],
+                                    inplace=True,
+                                    ignore_index=True)
+        except:
+            print('Can\'t sort dataframe')
         print('Reading done!')
         return final_df
 

@@ -1,9 +1,3 @@
-import datetime
-import os
-
-import IPython
-import IPython.display
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -12,9 +6,9 @@ import seaborn as sns
 import tensorflow as tf
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import TimeSeriesSplit
-from utils.config import (ENGINEERED_FEATURES, FORECAST_FEATURES,
-                          LOCAL_DATA_PATH, PRESSURE_TEMPERATURE, VIBRATIONS)
-from utils.readers import get_processed_data
+
+from utils.config import FORECAST_FEATURES, RAW_FORECAST_FEATURES
+from utils.readers import get_processed_data, DataReader, Preprocessor
 
 if __name__ == '__main__':
 
@@ -84,11 +78,21 @@ if __name__ == '__main__':
         labels.set_shape([None, self.label_width, None])
         return inputs, labels
 
-    local = True
+    local = False
+    raw = True
     if local:
-        df = get_processed_data(local=True, features_to_read=FORECAST_FEATURES)
+        df = get_processed_data(local=local,
+                                raw=raw,
+                                features_to_read=FORECAST_FEATURES)
     else:
-        df = get_processed_data(raw=False, features_to_read=FORECAST_FEATURES)
+        if raw:
+            df = get_processed_data(local=local,
+                                    raw=raw,
+                                    features_to_read=RAW_FORECAST_FEATURES)
+        else:
+            df = get_processed_data(local=local,
+                                    raw=raw,
+                                    features_to_read=FORECAST_FEATURES)
 
     window = 3600
     column_indices = {name: i for i, name in enumerate(FORECAST_FEATURES)}
