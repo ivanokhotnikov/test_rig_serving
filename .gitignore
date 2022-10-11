@@ -1,0 +1,18 @@
+__pycache__*
+.vscode
+.devcontainer
+# .gitignore
+*data
+*venv
+*.streamlit
+anomaly_detection/models*
+anomaly_detection/venv*
+anomaly_detection/.vscode*
+anomaly_detection/.devcontainer*
+forecasting/models*
+forecasting/venv*
+forecasting/data*
+forecasting/.vscode*
+forecasting/.devcontainer*
+forecasting/Dockerfile*
+*.drawio

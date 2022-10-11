@@ -1,0 +1,8 @@
+.git
+.gitignore
+.devcontainer
+.vscode
+venv/*
+models/*
+data/*
+nbs/*

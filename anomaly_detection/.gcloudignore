@@ -1,0 +1,12 @@
+.git
+.gitignore
+.devcontainer
+.vscode
+venv/*
+ml_detector_build.py
+nn_detector_build.py
+Dockerfile
+.dockerignore
+app.yaml
+Makefile
+*.png
