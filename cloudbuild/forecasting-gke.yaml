@@ -11,8 +11,6 @@ steps:
     args:
       [
         "run",
-        "--filename",
-        "https://raw.githubusercontent.com/ivanokhotnikov/test_rig/master/forecasting/configs/deployment.yaml",
         "--image",
         "gcr.io/test-rig-349313/forecasting",
         "--location",
