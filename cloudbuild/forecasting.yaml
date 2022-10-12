@@ -30,6 +30,8 @@ steps:
         "--port", 
         "8081"
       ]
+options:
+  machineType: 'E2_HIGHCPU_8'
 images:
   - gcr.io/test-rig-349313/forecasting
 timeout: 3600s
