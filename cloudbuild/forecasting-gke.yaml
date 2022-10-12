@@ -9,21 +9,12 @@ steps:
   - name: "gcr.io/cloud-builders/gke-deploy"
     id: "deploy container image to gke"
     args:
-      [
-        "run",
-        "--image",
-        "gcr.io/test-rig-349313/forecasting",
-        "--location",
-        "europe-west2-a",
-        "--cluster",
-        "forecasting-cluster",
-        "--expose",
-        "8081",
-        "--app",
-        "forecasting",
-        "--timeout",
-        "30m0s"
-      ]
+    - "run"
+    - "--image=gcr.io/test-rig-349313/forecasting"
+    - "--location=europe-west2-a"
+    - "--cluster=forecasting-cluster"
+    - "--app=forecasting"
+    - "--timeout=30m0s"
 options:
   machineType: 'E2_HIGHCPU_8'
 images:
