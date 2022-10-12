@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forecasting
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: forecasting
+  template:
+    metadata:
+      labels:
+        app: foreacsting
+    spec:
+      containers:
+      - name: hello-app
+        image: gcr.io/test-rig-349313/forecasting
+        ports:
+        - containerPort: 8081
+        env:
+          - name: PORT
+            value: "8081"
