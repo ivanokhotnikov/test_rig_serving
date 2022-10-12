@@ -17,6 +17,8 @@ steps:
         "europe-west2-a",
         "--cluster",
         "forecasting-cluster",
+        "--expose",
+        8081,
         "--timeout",
         "30m0s"
       ]
