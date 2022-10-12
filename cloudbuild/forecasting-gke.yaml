@@ -10,7 +10,7 @@ steps:
     id: "deploy container image to gke"
     args:
     - "run"
-    - "--filename=/forecasting/deployment.yaml"
+    - "--filename=forecasting/"
     - "--image=gcr.io/test-rig-349313/forecasting:latest"
     - "--location=europe-west2-a"
     - "--cluster=forecasting-cluster"
