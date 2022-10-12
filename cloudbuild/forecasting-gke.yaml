@@ -16,7 +16,9 @@ steps:
         "--location",
         "europe-west2-a",
         "--cluster",
-        "forecasting-cluster"
+        "forecasting-cluster",
+        "--timeout",
+        "30m0s"
       ]
 images:
   - gcr.io/test-rig-349313/forecasting
