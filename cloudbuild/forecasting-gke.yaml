@@ -19,6 +19,8 @@ steps:
         "forecasting-cluster",
         "--expose",
         "8081",
+        "--app",
+        "forecasting",
         "--timeout",
         "30m0s"
       ]
