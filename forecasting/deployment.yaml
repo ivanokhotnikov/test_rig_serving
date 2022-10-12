@@ -1,0 +1,40 @@
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: "forecasting"
+  namespace: "default"
+  labels:
+    name: "forecasting"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      name: "forecasting"
+  template:
+    metadata:
+      labels:
+        name: "forecasting"
+    spec:
+      containers:
+      - name: "forecasting-1"
+        image: "gcr.io/test-rig-349313/forecasting:latest"
+---
+apiVersion: "autoscaling/v2beta1"
+kind: "HorizontalPodAutoscaler"
+metadata:
+  name: "forecasting-hpa-5njh"
+  namespace: "default"
+  labels:
+    name: "forecasting"
+spec:
+  scaleTargetRef:
+    kind: "Deployment"
+    name: "forecasting"
+    apiVersion: "apps/v1"
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: "Resource"
+    resource:
+      name: "cpu"
+      targetAverageUtilization: 80
