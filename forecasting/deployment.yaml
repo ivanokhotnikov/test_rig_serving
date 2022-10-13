@@ -4,16 +4,16 @@ metadata:
   name: "forecasting"
   namespace: "default"
   labels:
-    name: "forecasting"
+    app: "forecasting"
 spec:
   replicas: 3
   selector:
     matchLabels:
-      name: "forecasting"
+      app: "forecasting"
   template:
     metadata:
       labels:
-        name: "forecasting"
+        app: "forecasting"
     spec:
       containers:
       - name: "forecasting-1"
@@ -22,10 +22,10 @@ spec:
 apiVersion: "autoscaling/v2beta1"
 kind: "HorizontalPodAutoscaler"
 metadata:
-  name: "forecasting-hpa-5njh"
+  name: "forecasting-hpa-1rqc"
   namespace: "default"
   labels:
-    name: "forecasting"
+    app: "forecasting"
 spec:
   scaleTargetRef:
     kind: "Deployment"

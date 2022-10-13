@@ -55,9 +55,11 @@ def read_raw_data():
         del current_df
         gc.collect()
     try:
-        final_df.sort_values(by=[' DATE', 'TIME', 'DATE'],
-                             inplace=True,
-                             ignore_index=True)
+        final_df.sort_values(
+            by=['UNIT', 'TEST', 'TIME'],
+            inplace=True,
+            ignore_index=True,
+        )
         logging.info(f'Final dataframe sorted')
     except:
         logging.info('Cannot sort dataframe')
