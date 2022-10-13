@@ -9,9 +9,12 @@ from components import (build_power_features, import_final_features,
 
 
 def main():
-    st.set_page_config(layout='centered',
-                       page_title='Forecasting',
-                       page_icon='fav.png')
+    st.set_page_config(
+        layout='centered',
+        page_title='Forecasting',
+        page_icon='https://github.com/ivanokhotnikov/test_rig/blob/master/images/fav.png',
+        initial_sidebar_state='collapsed',
+    )
     with st.sidebar:
         st.header('Settings')
         st.subheader('General')
