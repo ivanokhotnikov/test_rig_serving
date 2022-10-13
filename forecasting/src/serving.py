@@ -15,14 +15,14 @@ def main():
     with st.sidebar:
         st.header('Settings')
         st.subheader('General')
-        dev = st.checkbox(
+        dev_flag = st.checkbox(
             'DEV',
             value=True,
             help=
             'Process only one feature (load and forecast with the single model)',
         )
         st.subheader('Data')
-        read_raw = st.checkbox(
+        read_raw_flag = st.checkbox(
             'Read raw data',
             value=False,
             help=
@@ -35,6 +35,12 @@ def main():
             'The raw data file with the naming according to the test report convention, the format is HYD******-R1_RAW.csv',
         )
         st.subheader('Visualisation')
+        plot_each_unit_flag = st.checkbox(
+            'Plot each unit',
+            value=False,
+            help=
+            'The flag to colour or to shade out each unit in the forecast plot',
+        )
         averaging_window = int(
             st.number_input(
                 'Window size of moving average, seconds',
@@ -45,12 +51,7 @@ def main():
                 help=
                 'Select the size of moving average window.\n See https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.rolling.html for implementation.',
             ))
-        plot_each_unit = st.checkbox(
-            'Plot each unit',
-            value=False,
-            help=
-            'The flag to colour or to shade out each unit in the forecast plot',
-        )
+        st.subheader('Forecast')
         forecasting_window = int(
             st.number_input('Forecast with the last, seconds',
                             value=7200,
@@ -60,9 +61,9 @@ def main():
                             disabled=True if uploaded_file else False))
     st.title('Forecasting test data')
     st.subheader('Data')
-    with st.spinner('Reading processed data and features'):
+    with st.spinner('Reading data and features'):
         current_processed_data_df = read_raw_data(
-        ) if read_raw else import_processed_data()
+        ) if read_raw_flag else import_processed_data()
         final_features = import_final_features()
     tab1, tab2, tab3 = st.tabs(
         ['Features Correlation', 'Processed Data', 'Statistics'])
@@ -148,7 +149,7 @@ def main():
                      and not in_data_bucket(uploaded_file.name)) else None,
                     plot_ma_all=True,
                     rolling_window=averaging_window,
-                    plot_each_unit=plot_each_unit,
+                    plot_each_unit=plot_each_unit_flag,
                 ),
                 use_container_width=True,
             )
@@ -161,7 +162,7 @@ def main():
             col2.metric(label=list(metrics.keys())[1].capitalize().replace(
                 '_', ' '),
                         value=f'{list(metrics.values())[1]:.3e}')
-        if dev: break
+        if dev_flag: break
 
 
 if __name__ == '__main__':

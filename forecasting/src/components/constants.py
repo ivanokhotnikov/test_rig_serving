@@ -11,7 +11,7 @@ RAW_FORECAST_FEATURES = [
 ]
 COMMANDS = ['TIME', ' DATE', 'STEP', 'HSU DEMAND', 'PT4 SETPOINT']
 FEATURES_NO_TIME = [
-    f for f in RAW_FORECAST_FEATURES if f not in ('TIME', ' DATE')
+    f for f in RAW_FORECAST_FEATURES if f not in ('TIME', ' DATE', 'DATE')
 ]
 FEATURES_NO_TIME_AND_COMMANDS = [
     f for f in FEATURES_NO_TIME if f not in COMMANDS
