@@ -12,7 +12,7 @@ def main():
     st.set_page_config(
         layout='centered',
         page_title='Forecasting',
-        page_icon='https://github.com/ivanokhotnikov/test_rig/blob/master/images/fav.png',
+        page_icon='https://github.com/ivanokhotnikov/test_rig/blob/master/images/fav.png?raw=True',
         initial_sidebar_state='collapsed',
     )
     with st.sidebar:
