@@ -28,7 +28,7 @@ def plot_forecast(
                                  & (historical['TEST'] == test)]
                     [feature].values.reshape(-1),
                     line=dict(width=1, ),
-                    opacity=0.2,
+                    opacity=0.5,
                     name=f'{unit}-{test}',
                     showlegend=False,
                 )
@@ -40,7 +40,7 @@ def plot_forecast(
                 width=1,
                 color='gray',
             ),
-            opacity=0.2,
+            opacity=0.5,
             name='Historical',
             showlegend=True,
         )
