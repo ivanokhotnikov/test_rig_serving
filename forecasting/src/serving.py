@@ -1,4 +1,5 @@
 import streamlit as st
+from datetime import datetime
 
 from components import (build_power_features, import_final_features,
                         import_metrics, import_model, import_processed_data,
@@ -12,7 +13,8 @@ def main():
     st.set_page_config(
         layout='centered',
         page_title='Forecasting',
-        page_icon='https://github.com/ivanokhotnikov/test_rig/blob/master/images/fav.png?raw=True',
+        page_icon=
+        'https://github.com/ivanokhotnikov/test_rig/blob/master/images/fav.png?raw=True',
         initial_sidebar_state='collapsed',
     )
     with st.sidebar:
@@ -161,10 +163,13 @@ def main():
             col1, col2 = st.columns(2)
             col1.metric(label=list(metrics.keys())[0].capitalize().replace(
                 '_', ' '),
-                        value=f'{list(metrics.values())[0]:.3e}')
+                        value=f'{list(metrics.values())[0]:.2e}')
             col2.metric(label=list(metrics.keys())[1].capitalize().replace(
                 '_', ' '),
-                        value=f'{list(metrics.values())[1]:.3e}')
+                        value=f'{list(metrics.values())[1]:.2e}')
+            st.write(
+                f'{list(metrics.keys())[2].capitalize().replace("_", " ")} {list(metrics.values())[2]}'
+            )
         if dev_flag: break
 
 
