@@ -1,12 +1,11 @@
 import streamlit as st
-from datetime import datetime
 
 from components import (build_power_features, import_final_features,
                         import_metrics, import_model, import_processed_data,
                         in_data_bucket, plot_correlation_matrix, plot_forecast,
-                        predict, read_data_file, read_raw_data,
-                        remove_step_zero, upload_data,
-                        upload_new_raw_data_file)
+                        plot_latest_unit, predict, read_data_file,
+                        read_latest_unit, read_raw_data, remove_step_zero,
+                        upload_data, upload_new_raw_data_file)
 
 
 def main():
@@ -67,25 +66,37 @@ def main():
     st.title('Forecasting test data')
     st.subheader('Data')
     with st.spinner('Reading data and features'):
-        current_processed_data_df = read_raw_data(
+        current_processed_df = read_raw_data(
         ) if read_raw_flag else import_processed_data()
         final_features = import_final_features()
-    tab1, tab2, tab3 = st.tabs(
-        ['Features Correlation', 'Processed Data', 'Statistics'])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(
+        ['Features Correlation', 'Raw Data', 'Raw Data Plots', 'Processed Data', 'Statistics'])
     with tab1:
         st.subheader('Power features correlation')
-        st.plotly_chart(plot_correlation_matrix(current_processed_data_df,
-                                                final_features),
-                        use_container_width=True)
-        st.write(
-            'For reference and implementation see: \nhttps://en.wikipedia.org/wiki/Pearson_correlation_coefficient \nhttps://pandas.pydata.org/docs/reference/api/pandas.DataFrame.corr.html'
-        )
+        with st.spinner('Plotting correlation matrix'):
+            st.plotly_chart(plot_correlation_matrix(current_processed_df,
+                                                    final_features),
+                            use_container_width=True)
+            st.write(
+                'For reference and implementation see: \nhttps://en.wikipedia.org/wiki/Pearson_correlation_coefficient \nhttps://pandas.pydata.org/docs/reference/api/pandas.DataFrame.corr.html'
+            )
     with tab2:
-        st.subheader('Processed dataframe')
-        st.dataframe(current_processed_data_df, use_container_width=True)
+        st.subheader('Dataframe of the latest valid raw unit data')
+        with st.spinner('Reading latest raw data file'):
+            latest_unit_df = read_latest_unit(current_processed_df)
+            st.dataframe(latest_unit_df, use_container_width=True)
     with tab3:
+        st.subheader('Plots of latest valid raw unit data')
+        with st.spinner('PLotting latest raw data file'):
+            for feature in latest_unit_df.columns:
+                if feature not in ('TIME', 'DURATION', 'NOT USED', ' DATE'):
+                    st.plotly_chart(plot_latest_unit(latest_unit_df, feature))
+    with tab4:
+        st.subheader('Processed dataframe')
+        st.dataframe(current_processed_df, use_container_width=True)
+    with tab5:
         st.subheader('Descriptive statistics')
-        st.write(current_processed_data_df[final_features].describe().T.style.
+        st.write(current_processed_df[final_features].describe().T.style.
                  background_gradient(cmap='inferno'))
         st.write(
             'For more details see: \nhttps://test-data-profiling.hydreco.uk/')
@@ -114,9 +125,9 @@ def main():
                     f'Uploading {uploaded_file.name}, updating processed data.'
             ):
                 upload_new_raw_data_file(uploaded_file)
-                current_processed_data_df = read_raw_data()
+                current_processed_df = read_raw_data()
                 upload_data(
-                    current_processed_data_df,
+                    current_processed_df,
                     data_type='processed',
                 )
             st.write(
@@ -139,14 +150,14 @@ def main():
             forecast = predict(
                 new_data_df if (uploaded_file is not None
                                 and not in_data_bucket(uploaded_file.name))
-                else current_processed_data_df.iloc[-forecasting_window:],
+                else current_processed_df.iloc[-forecasting_window:],
                 feature,
                 scaler,
                 forecaster,
             )
             st.plotly_chart(
                 plot_forecast(
-                    current_processed_data_df,
+                    current_processed_df,
                     forecast,
                     feature,
                     new=new_data_df if
