@@ -69,8 +69,10 @@ def main():
         current_processed_df = read_raw_data(
         ) if read_raw_flag else import_processed_data()
         final_features = import_final_features()
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(
-        ['Features Correlation', 'Raw Data', 'Raw Data Plots', 'Processed Data', 'Statistics'])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        'Features Correlation', 'Raw Data', 'Raw Data Plots', 'Processed Data',
+        'Statistics'
+    ])
     with tab1:
         st.subheader('Power features correlation')
         with st.spinner('Plotting correlation matrix'):
@@ -86,11 +88,12 @@ def main():
             latest_unit_df = read_latest_unit(current_processed_df)
             st.dataframe(latest_unit_df, use_container_width=True)
     with tab3:
-        st.subheader('Plots of latest valid raw unit data')
+        st.subheader('Plots of the latest valid raw unit data')
         with st.spinner('PLotting latest raw data file'):
             for feature in latest_unit_df.columns:
                 if feature not in ('TIME', 'DURATION', 'NOT USED', ' DATE'):
-                    st.plotly_chart(plot_latest_unit(latest_unit_df, feature))
+                    st.plotly_chart(plot_latest_unit(latest_unit_df, feature),
+                                    use_container_width=True)
     with tab4:
         st.subheader('Processed dataframe')
         st.dataframe(current_processed_df, use_container_width=True)
@@ -178,6 +181,7 @@ def main():
             col2.metric(label=list(metrics.keys())[1].capitalize().replace(
                 '_', ' '),
                         value=f'{list(metrics.values())[1]:.2e}')
+            st.write('Trained on:')
             st.write(
                 f'{list(metrics.keys())[2].capitalize().replace("_", " ")} {list(metrics.values())[2]}'
             )
