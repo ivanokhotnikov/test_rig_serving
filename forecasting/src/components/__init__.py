@@ -14,5 +14,5 @@ from .read_data_file import read_data_file
 from .read_latest_unit import read_latest_unit
 from .read_raw_data import read_raw_data
 from .remove_step_zero import remove_step_zero
-from .upload_data import upload_data
+from .upload_processed_data import upload_processed_data
 from .upload_new_raw_data_file import upload_new_raw_data_file

@@ -106,13 +106,14 @@ def plot_forecast(
                     width=1.5,
                 ),
             )
-    fig.update_layout(template='none',
-                      xaxis=dict(title='Total running time, hours'),
-                      yaxis_title=f'{feature}_kW' if 'POWER' in feature else f'{feature}',
-                      title=f'{feature}_FORECAST',
-                      legend=dict(orientation='h',
-                                  yanchor='bottom',
-                                  xanchor='right',
-                                  x=1,
-                                  y=1.01))
+    fig.update_layout(
+        template='none',
+        xaxis=dict(title='Total running time, hours'),
+        yaxis_title=f'{feature.lower().capitalize().replace("_", " ")}, kW' if 'POWER' in feature else f'{feature.lower().capitalize().replace("_", " ")}',
+        title=f'{feature.lower().capitalize().replace("_", " ")} forecast',
+        legend=dict(orientation='h',
+                    yanchor='bottom',
+                    xanchor='right',
+                    x=1,
+                    y=1.01))
     return fig

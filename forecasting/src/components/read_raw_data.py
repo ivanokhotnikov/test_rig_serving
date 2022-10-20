@@ -10,16 +10,15 @@ import streamlit as st
 def read_raw_data():
     from components import (build_power_features, build_time_features,
                             remove_step_zero)
-    from components.constants import (DATA_BUCKET, DATA_BUCKET_NAME,
-                                      FEATURES_NO_TIME)
+    from components.constants import (RAW_DATA_BUCKET, PROCESSED_DATA_BUCKET,
+                                      INTERIM_DATA_BUCKET, FEATURES_NO_TIME)
 
     final_df = pd.DataFrame()
     units = []
-    st.write(f'Reading raw data files from {DATA_BUCKET_NAME}')
+    st.write(f'Reading raw data files from {RAW_DATA_BUCKET.name}')
     loading_bar = st.progress(0)
-    for idx, blob in enumerate(list(DATA_BUCKET.list_blobs(prefix='raw')), 1):
-        loading_bar.progress(idx /
-                             len(list(DATA_BUCKET.list_blobs(prefix='raw'))))
+    for idx, blob in enumerate(list(RAW_DATA_BUCKET.list_blobs()), 1):
+        loading_bar.progress(idx / len(list(RAW_DATA_BUCKET.list_blobs())))
         data_bytes = blob.download_as_bytes()
         current_df = None
         try:
@@ -44,7 +43,8 @@ def read_raw_data():
             continue
         logging.info(f'{blob.name} has been read')
         try:
-            unit = int(re.split(r'_|-|/', blob.name)[1][4:].lstrip('/HYD0'))
+            unit = int(
+                re.split(r'_|-|/', blob.name)[0][-4:].lstrip('/HYDhyd0'))
         except ValueError as err:
             logging.info(f'{err}\n. Cannot parse unit from {blob.name}')
             continue
@@ -63,6 +63,11 @@ def read_raw_data():
         logging.info(f'Final dataframe sorted')
     except:
         logging.info('Cannot sort dataframe')
+    INTERIM_DATA_BUCKET.blob('interim_data.csv').upload_from_string(
+        final_df.to_csv(index=False), content_type='text/csv')
+    logging.info(
+        f'Interim dataframe uploaded to the {INTERIM_DATA_BUCKET.name} data storage'
+    )
     final_df[FEATURES_NO_TIME] = final_df[FEATURES_NO_TIME].apply(
         pd.to_numeric,
         errors='coerce',
@@ -85,7 +90,9 @@ def read_raw_data():
     logging.info(f'Power features added')
     final_df.columns = final_df.columns.str.lstrip()
     final_df.columns = final_df.columns.str.replace(' ', '_')
-    DATA_BUCKET.blob('processed/processed_data.csv').upload_from_string(
+    PROCESSED_DATA_BUCKET.blob('processed_data.csv').upload_from_string(
         final_df.to_csv(index=False), content_type='text/csv')
-    logging.info(f'Processed dataframe uploaded to data storage')
+    logging.info(
+        f'Processed dataframe uploaded to the {PROCESSED_DATA_BUCKET.name} data storage'
+    )
     return final_df

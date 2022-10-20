@@ -183,13 +183,10 @@ class DataReader:
     @staticmethod
     def check_if_in_bucket(csv_file):
         storage_client = storage.Client()
-        try:
-            bucket = storage_client.get_bucket('test_rig_data')
-        except:
-            bucket = storage_client.get_bucket('rig_data')
+        bucket = storage_client.get_bucket('test_rig_raw_data')
         raw_folder_content = {
-            blob.name[4:]
-            for blob in list(bucket.list_blobs(prefix='raw'))
+            blob.name
+            for blob in list(bucket.list_blobs())
         }
         return bucket, csv_file.name in raw_folder_content
 
@@ -200,11 +197,11 @@ class DataReader:
             st.write(f'{csv_file.name} in the GCS bucket {bucket.name}')
         else:
             st.write(f'{csv_file.name} not in the GCS bucket {bucket.name}')
-            blob = bucket.blob(f'raw/{csv_file.name}')
+            blob = bucket.blob(csv_file.name)
             blob.upload_from_file(csv_file, content_type='text/csv')
             st.write(
                 f'{csv_file.name} uploaded to the GCS bucket {bucket.name}')
-        blob = bucket.get_blob(f'raw/{csv_file.name}')
+        blob = bucket.get_blob(csv_file.name)
         df = pd.read_csv(io.BytesIO(blob.download_as_bytes()),
                          usecols=FEATURES_FOR_ANOMALY_DETECTION,
                          index_col=False)

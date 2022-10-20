@@ -1,9 +1,9 @@
-from components.constants import DATA_BUCKET
+from components.constants import RAW_DATA_BUCKET
 
 
 def in_data_bucket(file):
     raw_folder_content = {
-        blob.name[4:]
-        for blob in list(DATA_BUCKET.list_blobs(prefix='raw'))
+        blob.name
+        for blob in list(RAW_DATA_BUCKET.list_blobs())
     }
-    return file in raw_folder_content
+    return file.name in raw_folder_content

@@ -5,7 +5,7 @@ from components import (build_power_features, import_final_features,
                         in_data_bucket, plot_correlation_matrix, plot_forecast,
                         plot_latest_unit, predict, read_data_file,
                         read_latest_unit, read_raw_data, remove_step_zero,
-                        upload_data, upload_new_raw_data_file)
+                        upload_processed_data, upload_new_raw_data_file)
 
 
 def main():
@@ -64,7 +64,7 @@ def main():
                             step=1,
                             disabled=True if uploaded_file else False))
     st.title('Forecasting test data')
-    st.subheader('Data')
+    st.header('Data overview')
     with st.spinner('Reading data and features'):
         current_processed_df = read_raw_data(
         ) if read_raw_flag else import_processed_data()
@@ -103,7 +103,7 @@ def main():
                  background_gradient(cmap='inferno'))
         st.write(
             'For more details see: \nhttps://test-data-profiling.hydreco.uk/')
-    st.subheader('Training')
+    st.header('Training overview')
     tab1, tab2 = st.tabs(['Pipeline', 'Architecture'])
     with tab1:
         st.subheader('Directed acyclic training graph')
@@ -123,16 +123,13 @@ def main():
         )
     st.header('Forecast')
     if uploaded_file is not None:
-        if not in_data_bucket(uploaded_file.name):
+        if not in_data_bucket(uploaded_file):
             with st.spinner(
                     f'Uploading {uploaded_file.name}, updating processed data.'
             ):
                 upload_new_raw_data_file(uploaded_file)
                 current_processed_df = read_raw_data()
-                upload_data(
-                    current_processed_df,
-                    data_type='processed',
-                )
+                upload_processed_data(current_processed_df)
             st.write(
                 f'{uploaded_file.name} has been uploaded to the data storage.')
             with st.spinner(f'Processing {uploaded_file.name}'):
@@ -146,7 +143,7 @@ def main():
     for idx, feature in enumerate(final_features, 1):
         progress_bar.progress(idx / len(final_features))
         with st.spinner(f'Plotting {feature} forecast'):
-            st.subheader(f'{feature}')
+            st.subheader(f'{feature.lower().capitalize().replace("_", " ")}')
             st.write('Model\'s forecast')
             scaler = import_model(f'{feature}.joblib')
             forecaster = import_model(f'{feature}.h5')

@@ -2,12 +2,12 @@ import io
 
 import pandas as pd
 
-from components.constants import DATA_BUCKET
+from components.constants import RAW_DATA_BUCKET
 
 
-def read_latest_unit(df):
-    latest = str(int(max(df['UNIT'].unique())))
-    for blob in DATA_BUCKET.list_blobs(prefix='raw'):
+def read_latest_unit(current_processed_df):
+    latest = str(int(max(current_processed_df['UNIT'].unique())))
+    for blob in RAW_DATA_BUCKET.list_blobs():
         if latest in blob.name and 'RAW' in blob.name:
             blob_bytes = blob.download_as_bytes()
             return pd.read_csv(
