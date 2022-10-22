@@ -11,7 +11,7 @@ from components.constants import (FEATURES_NO_TIME, RAW_DATA_BUCKET,
 def read_data_file(file):
     data_blob = RAW_DATA_BUCKET.get_blob(file.name)
     df = pd.read_csv(
-        io.Bytes(data_blob.download_as_bytes()),
+        io.BytesIO(data_blob.download_as_string()),
         usecols=RAW_FORECAST_FEATURES,
         index_col=False,
     )

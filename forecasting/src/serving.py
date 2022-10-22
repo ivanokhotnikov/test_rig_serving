@@ -1,11 +1,12 @@
 import streamlit as st
 
-from components import (build_power_features, import_final_features,
+from components import (build_power_features, import_processed_features,
                         import_metrics, import_model, import_processed_data,
-                        in_data_bucket, plot_correlation_matrix, plot_forecast,
-                        plot_latest_unit, predict, read_data_file,
-                        read_latest_unit, read_raw_data, remove_step_zero,
-                        upload_processed_data, upload_new_raw_data_file)
+                        is_in_data_bucket, is_data_valid,
+                        plot_correlation_matrix, plot_forecast, plot_unit,
+                        predict, read_data_file, read_latest_unit,
+                        read_raw_data, remove_step_zero,
+                        upload_new_raw_data_file, upload_processed_data)
 
 
 def main():
@@ -16,6 +17,7 @@ def main():
         'https://github.com/ivanokhotnikov/test_rig/blob/master/images/fav.png?raw=True',
         initial_sidebar_state='collapsed',
     )
+    st.title('Forecasting test data')
     with st.sidebar:
         st.header('Settings')
         st.subheader('General')
@@ -36,7 +38,7 @@ def main():
             'Upload raw data file',
             type=['csv'],
             help=
-            'The raw data file with the naming according to the test report convention, the format is HYD******-R1_RAW.csv',
+            'The raw data file with the naming according to the test report convention, the format is HYD000XXX-R1_RAW.csv, where XXX - unit number',
         )
         st.subheader('Visualisation')
         plot_each_unit_flag = st.checkbox(
@@ -63,12 +65,45 @@ def main():
                             max_value=100000,
                             step=1,
                             disabled=True if uploaded_file else False))
-    st.title('Forecasting test data')
+    if uploaded_file is not None:
+        st.header('Uploaded raw data')
+        with st.spinner(f'Validating the uploaded data file'):
+            data_valid = is_data_valid(uploaded_file)
+        in_bucket = is_in_data_bucket(uploaded_file)
+        st.info(f'{"Not" if not in_bucket else "Already"} in the data storage',
+                icon='ℹ️')
+        if data_valid:
+            if not in_bucket:
+                with st.spinner(f'Uploading {uploaded_file.name}'):
+                    upload_new_raw_data_file(uploaded_file)
+                with st.spinner('Updating processed data'):
+                    current_processed_df = read_raw_data()
+                    upload_processed_data(current_processed_df)
+                st.write(
+                    f'{uploaded_file.name} has been uploaded to the data storage.'
+                )
+            with st.spinner(f'Processing {uploaded_file.name}'):
+                new_data_df = read_data_file(uploaded_file)
+                new_data_df_wo_zero = remove_step_zero(new_data_df)
+                new_interim_df = build_power_features(new_data_df_wo_zero)
+            tab1, tab2 = st.tabs(
+                ['Uploaded raw data', 'Uploaded raw data plots'])
+            with tab1:
+                st.subheader('Dataframe of the uploaded unit data')
+                st.dataframe(new_data_df, use_container_width=True)
+            with tab2:
+                st.subheader('Plots of the uploaded unit data')
+                with st.spinner('Plotting uploaded unit data'):
+                    for feature in new_data_df.columns:
+                        if feature not in ('TIME', 'DURATION', 'NOT USED',
+                                           ' DATE', 'UNIT', 'TEST'):
+                            st.plotly_chart(plot_unit(new_data_df, feature),
+                                            use_container_width=True)
     st.header('Data overview')
     with st.spinner('Reading data and features'):
         current_processed_df = read_raw_data(
         ) if read_raw_flag else import_processed_data()
-        final_features = import_final_features()
+        proceseed_features = import_processed_features()
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         'Features Correlation', 'Raw Data', 'Raw Data Plots', 'Processed Data',
         'Statistics'
@@ -77,7 +112,7 @@ def main():
         st.subheader('Power features correlation')
         with st.spinner('Plotting correlation matrix'):
             st.plotly_chart(plot_correlation_matrix(current_processed_df,
-                                                    final_features),
+                                                    proceseed_features),
                             use_container_width=True)
             st.write(
                 'For reference and implementation see: \nhttps://en.wikipedia.org/wiki/Pearson_correlation_coefficient \nhttps://pandas.pydata.org/docs/reference/api/pandas.DataFrame.corr.html'
@@ -89,17 +124,17 @@ def main():
             st.dataframe(latest_unit_df, use_container_width=True)
     with tab3:
         st.subheader('Plots of the latest valid raw unit data')
-        with st.spinner('PLotting latest raw data file'):
+        with st.spinner('Plotting latest raw data file'):
             for feature in latest_unit_df.columns:
                 if feature not in ('TIME', 'DURATION', 'NOT USED', ' DATE'):
-                    st.plotly_chart(plot_latest_unit(latest_unit_df, feature),
+                    st.plotly_chart(plot_unit(latest_unit_df, feature),
                                     use_container_width=True)
     with tab4:
         st.subheader('Processed dataframe')
         st.dataframe(current_processed_df, use_container_width=True)
     with tab5:
         st.subheader('Descriptive statistics')
-        st.write(current_processed_df[final_features].describe().T.style.
+        st.write(current_processed_df[proceseed_features].describe().T.style.
                  background_gradient(cmap='inferno'))
         st.write(
             'For more details see: \nhttps://test-data-profiling.hydreco.uk/')
@@ -122,34 +157,18 @@ def main():
             'For the architecture details see: \nhttps://en.wikipedia.org/wiki/Long_short-term_memory \nhttps://keras.io/api/layers/recurrent_layers/lstm/ \nhttp://www.bioinf.jku.at/publications/older/2604.pdf'
         )
     st.header('Forecast')
-    if uploaded_file is not None:
-        if not in_data_bucket(uploaded_file):
-            with st.spinner(
-                    f'Uploading {uploaded_file.name}, updating processed data.'
-            ):
-                upload_new_raw_data_file(uploaded_file)
-                current_processed_df = read_raw_data()
-                upload_processed_data(current_processed_df)
-            st.write(
-                f'{uploaded_file.name} has been uploaded to the data storage.')
-            with st.spinner(f'Processing {uploaded_file.name}'):
-                new_data_df = read_data_file(uploaded_file)
-                new_data_df = remove_step_zero(new_data_df)
-                new_data_df = build_power_features(new_data_df)
-        else:
-            st.write(f'{uploaded_file.name} is already in the data storage.')
     st.write('Plotting feature forecasts')
     progress_bar = st.progress(0)
-    for idx, feature in enumerate(final_features, 1):
-        progress_bar.progress(idx / len(final_features))
+    for idx, feature in enumerate(proceseed_features, 1):
+        progress_bar.progress(idx / len(proceseed_features))
         with st.spinner(f'Plotting {feature} forecast'):
             st.subheader(f'{feature.lower().capitalize().replace("_", " ")}')
             st.write('Model\'s forecast')
             scaler = import_model(f'{feature}.joblib')
             forecaster = import_model(f'{feature}.h5')
             forecast = predict(
-                new_data_df if (uploaded_file is not None
-                                and not in_data_bucket(uploaded_file.name))
+                new_interim_df
+                if uploaded_file is not None and not in_bucket and data_valid
                 else current_processed_df.iloc[-forecasting_window:],
                 feature,
                 scaler,
@@ -160,9 +179,8 @@ def main():
                     current_processed_df,
                     forecast,
                     feature,
-                    new=new_data_df if
-                    (uploaded_file is not None
-                     and not in_data_bucket(uploaded_file.name)) else None,
+                    new=new_interim_df if uploaded_file is not None
+                    and not in_bucket and data_valid else None,
                     plot_ma_all=True,
                     rolling_window=averaging_window,
                     plot_each_unit=plot_each_unit_flag,
