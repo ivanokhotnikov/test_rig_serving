@@ -96,10 +96,9 @@ def plot_forecast(
                 3600,
                 y=pd.Series(
                     np.concatenate(
-                        historical[feature].values,
-                        new[feature].values,
-                        forecast.reshape(-1),
-                    )).rolling(rolling_window).mean().values,
+                        (historical[feature].values, new[feature].values,
+                         forecast.reshape(-1)
+                         ))).rolling(rolling_window).mean().values,
                 name='Moving average trend',
                 line=dict(
                     color='orange',
@@ -109,7 +108,9 @@ def plot_forecast(
     fig.update_layout(
         template='none',
         xaxis=dict(title='Total running time, hours'),
-        yaxis_title=f'{feature.lower().capitalize().replace("_", " ")}, kW' if 'POWER' in feature else f'{feature.lower().capitalize().replace("_", " ")}',
+        yaxis_title=f'{feature.lower().capitalize().replace("_", " ")}, kW'
+        if 'POWER' in feature else
+        f'{feature.lower().capitalize().replace("_", " ")}',
         title=f'{feature.lower().capitalize().replace("_", " ")} forecast',
         legend=dict(orientation='h',
                     yanchor='bottom',
