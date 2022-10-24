@@ -1,6 +1,6 @@
 import streamlit as st
 
-from components import (build_power_features, import_processed_features,
+from components import (build_power_features, import_forecast_features,
                         import_metrics, import_model, import_processed_data,
                         is_in_data_bucket, is_data_valid,
                         plot_correlation_matrix, plot_forecast, plot_unit,
@@ -103,7 +103,7 @@ def main():
     with st.spinner('Reading data and features'):
         current_processed_df = read_raw_data(
         ) if read_raw_flag else import_processed_data()
-        proceseed_features = import_processed_features()
+        forecast_features = import_forecast_features()
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         'Features Correlation', 'Raw Data', 'Raw Data Plots', 'Processed Data',
         'Statistics'
@@ -112,7 +112,7 @@ def main():
         st.subheader('Power features correlation')
         with st.spinner('Plotting correlation matrix'):
             st.plotly_chart(plot_correlation_matrix(current_processed_df,
-                                                    proceseed_features),
+                                                    forecast_features),
                             use_container_width=True)
             st.write(
                 'For reference and implementation see: \nhttps://en.wikipedia.org/wiki/Pearson_correlation_coefficient \nhttps://pandas.pydata.org/docs/reference/api/pandas.DataFrame.corr.html'
@@ -134,7 +134,7 @@ def main():
         st.dataframe(current_processed_df, use_container_width=True)
     with tab5:
         st.subheader('Descriptive statistics')
-        st.write(current_processed_df[proceseed_features].describe().T.style.
+        st.write(current_processed_df[forecast_features].describe().T.style.
                  background_gradient(cmap='inferno'))
         st.write(
             'For more details see: \nhttps://test-data-profiling.hydreco.uk/')
@@ -143,10 +143,10 @@ def main():
     with tab1:
         st.subheader('Directed acyclic training graph')
         st.image(
-            'https://raw.githubusercontent.com/ivanokhotnikov/test_rig_forecast_vertex/master/images/training_dag.png'
+            'https://raw.githubusercontent.com/ivanokhotnikov/test_rig_forecast_training/master/images/training_dag.png'
         )
         st.write(
-            'For more implementation details see: \nhttps://github.com/ivanokhotnikov/test_rig_forecast_vertex'
+            'For more implementation details see: \nhttps://github.com/ivanokhotnikov/test_rig_forecast_training'
         )
     with tab2:
         st.subheader('Example of model architecture')
@@ -159,8 +159,8 @@ def main():
     st.header('Forecast')
     st.write('Plotting feature forecasts')
     progress_bar = st.progress(0)
-    for idx, feature in enumerate(proceseed_features, 1):
-        progress_bar.progress(idx / len(proceseed_features))
+    for idx, feature in enumerate(forecast_features, 1):
+        progress_bar.progress(idx / len(forecast_features))
         with st.spinner(f'Plotting {feature} forecast'):
             st.subheader(f'{feature.lower().capitalize().replace("_", " ")}')
             st.write('Model\'s forecast')
