@@ -6,12 +6,7 @@ The repository contains the development of applications to detect anomalies in t
 
 Both applications (anomaly detector and forecaster) follow the same cloud architecture to continuously build, deploy and serve the app.
 
-![App serving architecture](https://github.com/ivanokhotnikov/test_rig/blob/master/images/serving_architecture.png?raw=True)
-
-
-# Scripts
-
-The directory contains the utility module `util` to pre- and post-process (see `readers.py`), to visualize (see `plotters.py`) the development results, to save and load preliminary output models, images, etc. The configurations are stored in  the `config.py` governing features sets, hyper-parameters tuning and directories.
+![App serving architecture](https://github.com/ivanokhotnikov/test_rig_serving/blob/master/images/serving.png?raw=True)
 
 # Links
 
@@ -22,6 +17,6 @@ The directory contains the utility module `util` to pre- and post-process (see `
 # Usage
 
 ```
-streamlit run anomaly_detection\run_detector.py
-streamlit run forecasting\run_forecaster.py
+streamlit run anomaly_detection/src/serving.py
+streamlit run forecasting/src/serving.py
 ```

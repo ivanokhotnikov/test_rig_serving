@@ -12,7 +12,7 @@ st.set_page_config(
     layout='centered',
     page_title='Anomaly detector',
     page_icon=
-    'https://github.com/ivanokhotnikov/test_rig/blob/master/images/fav.png?raw=True',
+    'https://github.com/ivanokhotnikov/test_rig_serving/blob/master/images/fav.png?raw=True',
 )
 
 

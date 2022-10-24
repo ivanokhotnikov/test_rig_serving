@@ -14,7 +14,7 @@ def main():
         layout='centered',
         page_title='Forecasting',
         page_icon=
-        'https://github.com/ivanokhotnikov/test_rig/blob/master/images/fav.png?raw=True',
+        'https://github.com/ivanokhotnikov/test_rig_serving/blob/master/images/fav.png?raw=True',
         initial_sidebar_state='collapsed',
     )
     st.title('Forecasting test data')
