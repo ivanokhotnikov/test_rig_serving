@@ -1,11 +1,11 @@
 import streamlit as st
 
-from components import (build_power_features, import_forecast_features,
-                        import_metrics, import_model, import_processed_data,
-                        is_in_data_bucket, is_data_valid,
-                        plot_correlation_matrix, plot_forecast, plot_unit,
-                        predict, read_data_file, read_latest_unit,
-                        read_raw_data, remove_step_zero,
+from components import (build_power_features, get_raw_data_folder_stats,
+                        import_forecast_features, import_metrics, import_model,
+                        import_processed_data, is_data_valid,
+                        is_in_data_bucket, plot_correlation_matrix,
+                        plot_forecast, plot_unit, predict, read_data_file,
+                        read_latest_unit, read_raw_data, remove_step_zero,
                         upload_new_raw_data_file, upload_processed_data)
 
 
@@ -65,6 +65,7 @@ def main():
                             max_value=100000,
                             step=1,
                             disabled=True if uploaded_file else False))
+    current_processed_df = None
     if uploaded_file is not None:
         st.header('Uploaded raw data')
         with st.spinner(f'Validating the uploaded data file'):
@@ -100,10 +101,11 @@ def main():
                             st.plotly_chart(plot_unit(new_data_df, feature),
                                             use_container_width=True)
     st.header('Data overview')
-    with st.spinner('Reading data and features'):
-        current_processed_df = read_raw_data(
-        ) if read_raw_flag else import_processed_data()
-        forecast_features = import_forecast_features()
+    if current_processed_df is None:
+        with st.spinner('Reading data and features'):
+            current_processed_df = read_raw_data(
+            ) if read_raw_flag else import_processed_data()
+            forecast_features = import_forecast_features()
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         'Features Correlation', 'Raw Data', 'Raw Data Plots', 'Processed Data',
         'Statistics'
@@ -121,7 +123,12 @@ def main():
         st.subheader('Dataframe of the latest valid raw unit data')
         with st.spinner('Reading latest raw data file'):
             latest_unit_df = read_latest_unit(current_processed_df)
-            st.dataframe(latest_unit_df, use_container_width=True)
+        st.dataframe(latest_unit_df, use_container_width=True)
+        num_files, num_valid_files = get_raw_data_folder_stats()
+        col1, col2 = st.columns(2)
+        col1.metric(label='Number of raw files', value=num_files)
+        col2.metric(label='Number of raw files with valid names',
+                    value=num_valid_files)
     with tab3:
         st.subheader('Plots of the latest valid raw unit data')
         with st.spinner('Plotting latest raw data file'):
@@ -134,13 +141,20 @@ def main():
         st.dataframe(current_processed_df, use_container_width=True)
     with tab5:
         st.subheader('Descriptive statistics')
-        st.write(current_processed_df[forecast_features].describe().T.style.
-                 background_gradient(cmap='inferno'))
+        st.dataframe(current_processed_df[forecast_features].describe().T)
         st.write(
             'For more details see: \nhttps://test-data-profiling.hydreco.uk/')
     st.header('Training overview')
-    tab1, tab2 = st.tabs(['Pipeline', 'Architecture'])
+    tab1, tab2, tab3, tab4 = st.tabs([
+        'Training pipeline', 'Training DAG', 'Model architecture',
+        'Serving pipeline'
+    ])
     with tab1:
+        st.subheader('Training pipeline')
+        st.image(
+            'https://raw.githubusercontent.com/ivanokhotnikov/test_rig_forecast_training/master/images/training_pipeline.png'
+        )
+    with tab2:
         st.subheader('Directed acyclic training graph')
         st.image(
             'https://raw.githubusercontent.com/ivanokhotnikov/test_rig_forecast_training/master/images/training_dag.png'
@@ -148,13 +162,18 @@ def main():
         st.write(
             'For more implementation details see: \nhttps://github.com/ivanokhotnikov/test_rig_forecast_training'
         )
-    with tab2:
+    with tab3:
         st.subheader('Example of model architecture')
         with st.spinner('Loading model example'):
             forecaster = import_model('DRIVE_POWER.h5')
         forecaster.summary(print_fn=lambda x: st.text(x))
         st.write(
             'For the architecture details see: \nhttps://en.wikipedia.org/wiki/Long_short-term_memory \nhttps://keras.io/api/layers/recurrent_layers/lstm/ \nhttp://www.bioinf.jku.at/publications/older/2604.pdf'
+        )
+    with tab4:
+        st.subheader('Serving pipeline')
+        st.image(
+            'https://raw.githubusercontent.com/ivanokhotnikov/test_rig_serving/master/images/serving.png'
         )
     st.header('Forecast')
     st.write('Plotting feature forecasts')
