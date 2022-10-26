@@ -2,8 +2,8 @@ steps:
   - name: python
     id: "install requirements"
     entrypoint: pip
-    args: ["install", "-r", "requirements.txt"]
-    dir: "forecasting/config"
+    args: ["install", "-r", "requirements.txt", "--user"]
+    dir: "forecasting/config/"
   - name: python
     id: "unit tests"
     entrypoint: python
