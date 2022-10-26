@@ -2,8 +2,7 @@ steps:
   - name: python
     id: "install requirements"
     entrypoint: pip
-    args: ["install", "-r", "requirements.txt", "--user"]
-    dir: "cloudbuild"
+    args: ["install", "-r", "/test_rig_serving/forecasting/configs/requirements.txt", "--user"]
   - name: python
     id: "unit tests"
     entrypoint: python
