@@ -1,4 +1,10 @@
 steps:
+  - name: python
+    entrypoint: pip
+    args: ["install", "-r", "forecasting/config/requirements.txt"]
+  - name: python
+    entrypoint: python
+    args: ["-m", "pytest"]
   - name: "gcr.io/cloud-builders/docker"
     id: "build container image"
     args: ["build", "-f","serving.dockerfile","-t", "gcr.io/test-rig-349313/forecasting", "."]

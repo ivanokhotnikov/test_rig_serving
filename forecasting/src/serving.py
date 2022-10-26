@@ -2,9 +2,9 @@ import streamlit as st
 
 from components import (build_power_features, get_raw_data_folder_stats,
                         import_forecast_features, import_metrics, import_model,
-                        import_processed_data, is_data_valid,
+                        read_processed_data, is_data_valid,
                         is_in_data_bucket, plot_correlation_matrix,
-                        plot_forecast, plot_unit, predict, read_data_file,
+                        plot_forecast, plot_unit, predict, read_unit_data,
                         read_latest_unit, read_raw_data, remove_step_zero,
                         upload_new_raw_data_file, upload_processed_data)
 
@@ -84,7 +84,7 @@ def main():
                     f'{uploaded_file.name} has been uploaded to the data storage.'
                 )
             with st.spinner(f'Processing {uploaded_file.name}'):
-                new_data_df = read_data_file(uploaded_file)
+                new_data_df = read_unit_data(uploaded_file.name)
                 new_data_df_wo_zero = remove_step_zero(new_data_df)
                 new_interim_df = build_power_features(new_data_df_wo_zero)
             tab1, tab2 = st.tabs(
@@ -104,7 +104,7 @@ def main():
     if current_processed_df is None:
         with st.spinner('Reading data and features'):
             current_processed_df = read_raw_data(
-            ) if read_raw_flag else import_processed_data()
+            ) if read_raw_flag else read_processed_data()
             forecast_features = import_forecast_features()
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         'Features Correlation', 'Raw Data', 'Raw Data Plots', 'Processed Data',
@@ -200,7 +200,6 @@ def main():
                     feature,
                     new=new_interim_df if uploaded_file is not None
                     and not in_bucket and data_valid else None,
-                    plot_ma_all=True,
                     rolling_window=averaging_window,
                     plot_each_unit=plot_each_unit_flag,
                 ),

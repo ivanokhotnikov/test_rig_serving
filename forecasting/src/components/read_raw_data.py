@@ -4,21 +4,17 @@ import logging
 import re
 
 import pandas as pd
-import streamlit as st
 
 
 def read_raw_data():
+    logging.basicConfig(level=logging.INFO)
     from components import (build_power_features, build_time_features,
                             remove_step_zero)
-    from components.constants import (RAW_DATA_BUCKET, PROCESSED_DATA_BUCKET,
-                                      INTERIM_DATA_BUCKET, FEATURES_NO_TIME)
-
+    from components.constants import (FEATURES_NO_TIME, INTERIM_DATA_BUCKET,
+                                      PROCESSED_DATA_BUCKET, RAW_DATA_BUCKET)
     final_df = pd.DataFrame()
     units = []
-    st.write(f'Reading raw data files from {RAW_DATA_BUCKET.name}')
-    loading_bar = st.progress(0)
-    for idx, blob in enumerate(list(RAW_DATA_BUCKET.list_blobs()), 1):
-        loading_bar.progress(idx / len(list(RAW_DATA_BUCKET.list_blobs())))
+    for blob in RAW_DATA_BUCKET.list_blobs():
         data_bytes = blob.download_as_bytes()
         current_df = None
         try:
@@ -42,12 +38,11 @@ def read_raw_data():
             logging.info(f'Cannot read {blob.name}')
             continue
         logging.info(f'{blob.name} has been read')
-        try:
-            unit = int(
-                re.split(r'_|-|/', blob.name)[0][-4:].lstrip('/HYDhyd0'))
-        except ValueError as err:
-            logging.info(f'{err}\n. Cannot parse unit from {blob.name}')
+        unit_str = re.split(r'_|-|/', blob.name)[0][-4:].lstrip('/HYDhyd0')
+        if unit_str == '':
+            logging.info(f'Cannot parse unit from {blob.name}')
             continue
+        unit = int(unit_str)
         units.append(unit)
         current_df['UNIT'] = unit
         current_df['TEST'] = int(units.count(unit))

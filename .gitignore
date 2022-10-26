@@ -9,7 +9,6 @@ anomaly_detection/models*
 anomaly_detection/venv*
 anomaly_detection/.vscode*
 anomaly_detection/.devcontainer*
-anomaly_detection/configs*
 anomaly_detection/nbs*
 forecasting/models*
 forecasting/venv*
@@ -20,4 +19,3 @@ forecasting/Dockerfile*
 *.drawio
 *notebooks
 *nbs
-*configs

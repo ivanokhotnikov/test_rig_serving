@@ -11,7 +11,6 @@ def plot_forecast(
     feature: str,
     rolling_window: Optional[int] = None,
     new: Optional[pd.DataFrame] = None,
-    plot_ma_all: Optional[bool] = False,
     plot_each_unit: Optional[bool] = False,
 ) -> go.Figure:
     fig = go.Figure()
@@ -55,7 +54,7 @@ def plot_forecast(
                 width=1.25,
             ),
         )
-        if plot_ma_all and rolling_window:
+        if rolling_window:
             fig.add_scatter(
                 x=np.arange(len(historical) + len(forecast) + 1) / 3600,
                 y=pd.Series(
@@ -90,7 +89,7 @@ def plot_forecast(
                 width=1.25,
             ),
         )
-        if plot_ma_all and rolling_window:
+        if rolling_window:
             fig.add_scatter(
                 x=np.arange(len(historical) + len(new) + len(forecast) + 1) /
                 3600,
