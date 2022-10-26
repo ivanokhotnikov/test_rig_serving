@@ -5,6 +5,7 @@ __pycache__*
 *data
 *venv
 *.streamlit
+*.pytest_cache
 anomaly_detection/models*
 anomaly_detection/venv*
 anomaly_detection/.vscode*
