@@ -1,10 +1,10 @@
 steps:
-  - name: python
+  - name: python:3.10-slim
     id: "install requirements"
     entrypoint: pip
     args: ["install", "-r", "requirements.txt", "--user"]
     dir: "forecasting/configs"
-  - name: python
+  - name: python:3.10-slim
     id: "unit tests"
     entrypoint: python
     args: ["-m", "pytest"]
