@@ -46,6 +46,7 @@ def test_plot_forecast(capsys, rolling_window, new, plot_each_unit):
                   forecast,
                   features[0],
                   rolling_window=rolling_window,
-                  new=new_interim_df,
+                  new=new,
                   plot_each_unit=plot_each_unit)
-    pass
+    out, err = capsys.readouterr()
+    assert err == ''
