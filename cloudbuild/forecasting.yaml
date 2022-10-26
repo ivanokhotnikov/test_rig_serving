@@ -1,8 +1,10 @@
 steps:
   - name: python
+    id: "install requirements"
     entrypoint: pip
     args: ["install", "-r", "forecasting/config/requirements.txt"]
   - name: python
+    id: "unit tests"
     entrypoint: python
     args: ["-m", "pytest"]
   - name: "gcr.io/cloud-builders/docker"
