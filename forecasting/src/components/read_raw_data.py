@@ -9,7 +9,7 @@ import pandas as pd
 def read_raw_data():
     logging.basicConfig(level=logging.INFO)
     from components import (build_power_features, build_time_features,
-                            remove_step_zero)
+                            remove_step_zero, is_name_valid)
     from components.constants import (FEATURES_NO_TIME, INTERIM_DATA_BUCKET,
                                       PROCESSED_DATA_BUCKET, RAW_DATA_BUCKET)
     final_df = pd.DataFrame()
@@ -18,7 +18,7 @@ def read_raw_data():
         data_bytes = blob.download_as_bytes()
         current_df = None
         try:
-            if blob.name.endswith('.csv') and 'RAW' in blob.name[3:]:
+            if is_name_valid(blob):
                 current_df = pd.read_csv(
                     io.BytesIO(data_bytes),
                     header=0,

@@ -7,6 +7,6 @@ def predict(data_df, feature, scaler, forecaster):
     sequenced_scaled_data = create_sequences(scaled_data,
                                              lookback=LOOKBACK,
                                              inference=True)
-    forecast = forecaster.predict(sequenced_scaled_data)
-    forecast = scaler.inverse_transform(forecast)
+    unscaled_forecast = forecaster.predict(sequenced_scaled_data)
+    forecast = scaler.inverse_transform(unscaled_forecast)
     return forecast
