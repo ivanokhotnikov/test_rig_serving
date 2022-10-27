@@ -70,40 +70,44 @@ def plot_forecast(
                 ),
             )
     else:
-        fig.add_scatter(
-            x=np.arange(len(history_df),
-                        len(history_df) + len(new_data_df) + 1) / 3600,
-            y=new_data_df[feature].values.reshape(-1),
-            name='New data',
-            line=dict(
-                color='steelblue',
-                width=1,
-            ),
-        )
-        fig.add_scatter(
-            x=np.arange(
-                len(history_df) + LOOKBACK,
-                LOOKBACK + len(history_df) + len(forecast) + 1) / 3600,
-            y=forecast.reshape(-1),
-            name='Old forecast',
-            line=dict(
-                color='indianred',
-                width=1,
-            ),
-        )
-        fig.add_scatter(
-            x=np.arange(
-                len(history_df) + len(new_data_df),
-                len(history_df) + len(new_data_df) + len(new_forecast) + 1) /
-            3600,
-            y=forecast.reshape(-1),
-            name='New forecast',
-            line=dict(
-                color='seagreen',
-                width=1,
-            ),
-        )
-        if rolling_window:
+        if new_data_df is not None:
+            fig.add_scatter(
+                x=np.arange(len(history_df),
+                            len(history_df) + len(new_data_df) + 1) / 3600,
+                y=new_data_df[feature].values.reshape(-1),
+                name='New data',
+                line=dict(
+                    color='steelblue',
+                    width=1,
+                ),
+            )
+            if new_forecast is not None:
+                fig.add_scatter(
+                    x=np.arange(
+                        len(history_df) + len(new_data_df),
+                        len(history_df) + len(new_data_df) +
+                        len(new_forecast) + 1) / 3600,
+                    y=forecast.reshape(-1),
+                    name='New forecast',
+                    line=dict(
+                        color='seagreen',
+                        width=1,
+                    ),
+                )
+        if forecast is not None:
+            fig.add_scatter(
+                x=np.arange(
+                    len(history_df) + LOOKBACK,
+                    LOOKBACK + len(history_df) + len(forecast) + 1) / 3600,
+                y=forecast.reshape(-1),
+                name='Old forecast',
+                line=dict(
+                    color='indianred',
+                    width=1,
+                ),
+            )
+            
+        if rolling_window is not None and new_data_df is not None and new_forecast is not None:
             fig.add_scatter(
                 x=np.arange(
                     len(history_df) + len(new_data_df) + len(new_forecast) + 1)

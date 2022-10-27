@@ -8,7 +8,7 @@ steps:
     id: "unit tests"
     entrypoint: python
     args: ["-m", "pytest"]
-    dir: "forecasting/tests"
+    dir: "forecasting/src/tests"
   - name: "gcr.io/cloud-builders/docker"
     id: "build container image"
     args: ["build", "-f","serving.dockerfile","-t", "gcr.io/test-rig-349313/forecasting", "."]
