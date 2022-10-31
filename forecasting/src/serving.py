@@ -48,14 +48,14 @@ def main(prod_flag_value, plot_each_unit_flag_value, plot_ma_flag_value):
             help=
             'The flag to colour or to shade out each unit in the forecast plot',
         )
-        averaging_window_flag = st.checkbox(
+        rolling_window_flag = st.checkbox(
             'Plot moving avearge',
             value=plot_ma_flag_value,
             help='The flag to cbuild and plot moving average',
         )
-        averaging_window = None
-        if averaging_window_flag:
-            averaging_window = st.number_input(
+        rolling_window = None
+        if rolling_window_flag:
+            rolling_window = st.number_input(
                 'Window size of moving average, seconds',
                 value=3600,
                 min_value=1,
@@ -107,10 +107,8 @@ def main(prod_flag_value, plot_each_unit_flag_value, plot_ma_flag_value):
         current_processed_df = read_raw_data(
         ) if read_raw_flag else read_processed_data()
     forecast_features = import_forecast_features()
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        'Features Correlation', 'Raw Data', 'Raw Data Plots', 'Processed Data',
-        'Statistics'
-    ])
+    tab1, tab2, tab3, tab4 = st.tabs(
+        ['Features Correlation', 'Raw Data', 'Processed Data', 'Statistics'])
     with tab1:
         st.subheader('Power features correlation')
         with st.spinner('Plotting correlation matrix'):
@@ -123,26 +121,37 @@ def main(prod_flag_value, plot_each_unit_flag_value, plot_ma_flag_value):
                 'For reference and implementation see: \nhttps://en.wikipedia.org/wiki/Pearson_correlation_coefficient \nhttps://pandas.pydata.org/docs/reference/api/pandas.DataFrame.corr.html'
             )
     with tab2:
-        st.subheader('Dataframe of the latest valid raw unit data')
-        with st.spinner('Reading latest raw data file'):
-            latest_unit_df = read_latest_unit(current_processed_df)
-        st.dataframe(latest_unit_df, use_container_width=True)
+        st.subheader('Raw unit data storage')
         num_files, num_valid_files = get_raw_data_folder_stats()
         col1, col2 = st.columns(2)
         col1.metric(label='Number of raw files', value=num_files)
         col2.metric(label='Number of raw files with valid names',
                     value=num_valid_files)
+        unit = None
+        unit = st.selectbox(
+            'Select the unit number to display',
+            current_processed_df['UNIT'].unique(),
+            index=len(current_processed_df['UNIT'].unique()) - 1,
+        )
+        tab21, tab22 = st.tabs(['Dataframe', 'Plots'])
+        with tab21:
+            st.subheader('Dataframe of the raw unit data')
+            with st.spinner('Reading raw data file'):
+                unit_df = read_unit_data(
+                    f'HYD000{str(unit).zfill(3)}-R1_RAW.csv')
+            st.dataframe(unit_df, use_container_width=True)
+        with tab22:
+            st.subheader('Plots of the raw unit data')
+            with st.spinner('Plotting the raw data'):
+                for feature in unit_df.columns:
+                    if feature not in ('TIME', 'DURATION', 'NOT USED',
+                                       ' DATE'):
+                        st.plotly_chart(plot_unit(unit_df, feature),
+                                        use_container_width=True)
     with tab3:
-        st.subheader('Plots of the latest valid raw unit data')
-        with st.spinner('Plotting latest raw data file'):
-            for feature in latest_unit_df.columns:
-                if feature not in ('TIME', 'DURATION', 'NOT USED', ' DATE'):
-                    st.plotly_chart(plot_unit(latest_unit_df, feature),
-                                    use_container_width=True)
-    with tab4:
         st.subheader('Processed dataframe')
         st.dataframe(current_processed_df, use_container_width=True)
-    with tab5:
+    with tab4:
         st.subheader('Descriptive statistics')
         st.dataframe(current_processed_df[forecast_features].describe().T)
         st.write(
@@ -205,6 +214,7 @@ def main(prod_flag_value, plot_each_unit_flag_value, plot_ma_flag_value):
             else:
                 new_data = None
                 new_forecast = None
+                latest_unit_df = read_latest_unit(current_processed_df)
                 forecast = predict(
                     data_df=current_processed_df[-len(latest_unit_df):],
                     feature=feature,
@@ -218,7 +228,7 @@ def main(prod_flag_value, plot_each_unit_flag_value, plot_ma_flag_value):
                     feature=feature,
                     new_forecast=new_forecast,
                     new_data_df=new_data,
-                    rolling_window=averaging_window,
+                    rolling_window=rolling_window,
                     plot_each_unit=plot_each_unit_flag,
                 ),
                 use_container_width=True,
