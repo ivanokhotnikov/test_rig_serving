@@ -6,8 +6,7 @@ RAW_FORECAST_FEATURES = [
     'M2 Amp', 'M2 Torque', 'CHARGE PT', 'CHARGE FLOW', 'M3 RPM', 'M3 Amp',
     'M3 Torque', 'Servo PT', 'SERVO FLOW', 'M4 ANGLE', 'HSU IN', 'TT2',
     'HSU OUT', 'M5 RPM', 'M5 Amp', 'M5 Torque', 'M6 RPM', 'M6 Amp',
-    'M6 Torque', 'M7 RPM', 'M7 Amp', 'M7 Torque', 'Vibration 1',
-    ' Vibration 2', ' DATE'
+    'M6 Torque', 'M7 RPM', 'M7 Amp', 'M7 Torque', 'Vibration 1', ' Vibration 2'
 ]
 COMMANDS = ['TIME', ' DATE', 'STEP', 'HSU DEMAND', 'PT4 SETPOINT']
 FEATURES_NO_TIME = [

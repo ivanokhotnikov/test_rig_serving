@@ -2,16 +2,18 @@ import argparse
 
 import streamlit as st
 
-from components import (build_power_features, get_raw_data_folder_stats,
-                        import_forecast_features, import_metrics, import_model,
-                        is_data_valid, is_in_data_bucket,
-                        plot_correlation_matrix, plot_forecast, plot_unit,
-                        predict, read_latest_unit, read_processed_data,
-                        read_raw_data, read_unit_data, remove_step_zero,
-                        upload_new_raw_data_file, upload_processed_data)
+from components import (build_power_features, get_raw_data_files,
+                        get_raw_data_folder_stats, import_forecast_features,
+                        import_metrics, import_model, is_data_valid,
+                        is_in_data_bucket, plot_correlation_matrix,
+                        plot_forecast, plot_unit, predict, read_latest_unit,
+                        read_processed_data, read_raw_data, read_unit_data,
+                        remove_step_zero, upload_new_raw_data_file,
+                        upload_processed_data)
 
 
-def main(prod_flag_value, plot_each_unit_flag_value, plot_ma_flag_value):
+def main(prod_flag_value, plot_forecast_flag_value, plot_each_unit_flag_value,
+         plot_ma_flag_value):
     st.set_page_config(
         layout='centered',
         page_title='Forecasting',
@@ -22,12 +24,6 @@ def main(prod_flag_value, plot_each_unit_flag_value, plot_ma_flag_value):
     st.title('Forecasting test data')
     with st.sidebar:
         st.header('Settings')
-        st.subheader('General')
-        prod_flag = st.checkbox(
-            'Process all features',
-            value=prod_flag_value,
-            help='Process all features (load and forecast)',
-        )
         st.subheader('Data')
         read_raw_flag = st.checkbox(
             'Read raw data',
@@ -42,28 +38,39 @@ def main(prod_flag_value, plot_each_unit_flag_value, plot_ma_flag_value):
             'The raw data file with the naming according to the test report convention, the format is HYD000XXX-R1_RAW.csv, where XXX - unit number',
         )
         st.subheader('Visualisation')
-        plot_each_unit_flag = st.checkbox(
-            'Plot each unit',
-            value=plot_each_unit_flag_value,
-            help=
-            'The flag to colour or to shade out each unit in the forecast plot',
+        plot_forecast_flag = st.checkbox(
+            'Plot forecast',
+            value=plot_forecast_flag_value,
+            help='The flag to plot forecast',
         )
-        rolling_window_flag = st.checkbox(
-            'Plot moving avearge',
-            value=plot_ma_flag_value,
-            help='The flag to cbuild and plot moving average',
-        )
-        rolling_window = None
-        if rolling_window_flag:
-            rolling_window = st.number_input(
-                'Window size of moving average, seconds',
-                value=3600,
-                min_value=1,
-                max_value=7200,
-                step=1,
-                help=
-                'Select the size of moving average window.\n See https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.rolling.html for implementation.',
+        if plot_forecast_flag:
+            prod_flag = st.checkbox(
+                'Process all features',
+                value=prod_flag_value,
+                help='Process all features (load and forecast)',
             )
+            plot_each_unit_flag = st.checkbox(
+                'Plot each unit',
+                value=plot_each_unit_flag_value,
+                help=
+                'The flag to colour or to shade out each unit in the forecast plot',
+            )
+            rolling_window_flag = st.checkbox(
+                'Plot moving avearge',
+                value=plot_ma_flag_value,
+                help='The flag to cbuild and plot moving average',
+            )
+            rolling_window = None
+            if rolling_window_flag:
+                rolling_window = st.number_input(
+                    'Window size of moving average, seconds',
+                    value=3600,
+                    min_value=1,
+                    max_value=7200,
+                    step=1,
+                    help=
+                    'Select the size of moving average window.\n See https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.rolling.html for implementation.',
+                )
     current_processed_df = None
     if uploaded_file is not None:
         st.header('Uploaded raw data')
@@ -133,21 +140,32 @@ def main(prod_flag_value, plot_each_unit_flag_value, plot_ma_flag_value):
             current_processed_df['UNIT'].unique(),
             index=len(current_processed_df['UNIT'].unique()) - 1,
         )
+        unit_files_list = get_raw_data_files(unit)
+        if unit is not None:
+            unit_file_name = st.selectbox(
+                'Select the data file',
+                unit_files_list,
+                index=0,
+            )
         tab21, tab22 = st.tabs(['Dataframe', 'Plots'])
         with tab21:
-            st.subheader('Dataframe of the raw unit data')
-            with st.spinner('Reading raw data file'):
-                unit_df = read_unit_data(
-                    f'HYD000{str(unit).zfill(3)}-R1_RAW.csv')
+            st.subheader('Dataframe of the unit data')
+            unit_df = read_unit_data(unit_file_name)
+            st.write(unit_file_name)
             st.dataframe(unit_df, use_container_width=True)
         with tab22:
             st.subheader('Plots of the raw unit data')
             with st.spinner('Plotting the raw data'):
+                st.write(unit_file_name)
                 for feature in unit_df.columns:
                     if feature not in ('TIME', 'DURATION', 'NOT USED',
-                                       ' DATE'):
-                        st.plotly_chart(plot_unit(unit_df, feature),
-                                        use_container_width=True)
+                                       'NOT_USED', 'UNIT', 'TEST',
+                                       'RUNNING_SECONDS', 'RUNNING_HOURS',
+                                       ' DATE', 'DATE'):
+                        st.plotly_chart(
+                            plot_unit(unit_df, feature),
+                            use_container_width=True,
+                        )
     with tab3:
         st.subheader('Processed dataframe')
         st.dataframe(current_processed_df, use_container_width=True)
@@ -187,72 +205,78 @@ def main(prod_flag_value, plot_each_unit_flag_value, plot_ma_flag_value):
         st.image(
             'https://raw.githubusercontent.com/ivanokhotnikov/test_rig_serving/master/images/serving.png'
         )
-    st.header('Forecast')
-    st.write('Plotting feature forecasts')
-    progress_bar = st.progress(0)
-    for idx, feature in enumerate(forecast_features, 1):
-        progress_bar.progress(idx / len(forecast_features))
-        with st.spinner(f'Plotting {feature} forecast'):
-            st.subheader(f'{feature.lower().capitalize().replace("_", " ")}')
-            st.write('Model\'s forecast')
-            scaler = import_model(f'{feature}.joblib')
-            forecaster = import_model(f'{feature}.h5')
-            if uploaded_file is not None and not in_bucket and data_valid:
-                new_data = new_interim_df
-                new_forecast = predict(
-                    data_df=new_data,
-                    feature=feature,
-                    scaler=scaler,
-                    forecaster=forecaster,
+    if plot_forecast_flag:
+        st.header('Forecast')
+        st.write('Plotting feature forecasts')
+        progress_bar = st.progress(0)
+        for idx, feature in enumerate(forecast_features, 1):
+            progress_bar.progress(idx / len(forecast_features))
+            with st.spinner(f'Loading {feature} model'):
+                scaler = import_model(f'{feature}.joblib')
+                forecaster = import_model(f'{feature}.h5')
+            with st.spinner(f'Plotting {feature} forecast'):
+                st.subheader(
+                    f'{feature.lower().capitalize().replace("_", " ")}')
+                st.write('Model\'s forecast')
+                if uploaded_file is not None and not in_bucket and data_valid:
+                    new_data = new_interim_df
+                    new_forecast = predict(
+                        data_df=new_data,
+                        feature=feature,
+                        scaler=scaler,
+                        forecaster=forecaster,
+                    )
+                    forecast = predict(
+                        data_df=current_processed_df[-len(new_data):],
+                        feature=feature,
+                        scaler=scaler,
+                        forecaster=forecaster,
+                    )
+                else:
+                    new_data = None
+                    new_forecast = None
+                    latest_unit_df = read_latest_unit(current_processed_df)
+                    forecast = predict(
+                        data_df=current_processed_df[-len(latest_unit_df):],
+                        feature=feature,
+                        scaler=scaler,
+                        forecaster=forecaster,
+                    )
+                st.plotly_chart(
+                    plot_forecast(
+                        history_df=current_processed_df,
+                        forecast=forecast,
+                        feature=feature,
+                        new_forecast=new_forecast,
+                        new_data_df=new_data,
+                        rolling_window=rolling_window,
+                        plot_each_unit=plot_each_unit_flag,
+                    ),
+                    use_container_width=True,
                 )
-                forecast = predict(
-                    data_df=current_processed_df[-len(new_data):],
-                    feature=feature,
-                    scaler=scaler,
-                    forecaster=forecaster,
+                st.write('Model\'s metrics at training')
+                metrics = import_metrics(feature)
+                col1, col2 = st.columns(2)
+                col1.metric(label=list(metrics.keys())[0].capitalize().replace(
+                    '_', ' '),
+                            value=f'{list(metrics.values())[0]:.2e}')
+                col2.metric(label=list(metrics.keys())[1].capitalize().replace(
+                    '_', ' '),
+                            value=f'{list(metrics.values())[1]:.2e}')
+                st.write('Model trained on:')
+                st.write(
+                    f'{list(metrics.keys())[2].capitalize().replace("_", " ")} {list(metrics.values())[2]}'
                 )
-            else:
-                new_data = None
-                new_forecast = None
-                latest_unit_df = read_latest_unit(current_processed_df)
-                forecast = predict(
-                    data_df=current_processed_df[-len(latest_unit_df):],
-                    feature=feature,
-                    scaler=scaler,
-                    forecaster=forecaster,
-                )
-            st.plotly_chart(
-                plot_forecast(
-                    history_df=current_processed_df,
-                    forecast=forecast,
-                    feature=feature,
-                    new_forecast=new_forecast,
-                    new_data_df=new_data,
-                    rolling_window=rolling_window,
-                    plot_each_unit=plot_each_unit_flag,
-                ),
-                use_container_width=True,
-            )
-            st.write('Model\'s metrics at training')
-            metrics = import_metrics(feature)
-            col1, col2 = st.columns(2)
-            col1.metric(label=list(metrics.keys())[0].capitalize().replace(
-                '_', ' '),
-                        value=f'{list(metrics.values())[0]:.2e}')
-            col2.metric(label=list(metrics.keys())[1].capitalize().replace(
-                '_', ' '),
-                        value=f'{list(metrics.values())[1]:.2e}')
-            st.write('Model trained on:')
-            st.write(
-                f'{list(metrics.keys())[2].capitalize().replace("_", " ")} {list(metrics.values())[2]}'
-            )
-        if not prod_flag: break
+            if not prod_flag: break
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--prod',
                         help='Production flag (processes all features if set)',
+                        action='store_true')
+    parser.add_argument('--plot_forecast',
+                        help='Plot forecast flag',
                         action='store_true')
     parser.add_argument('--plot_each_unit',
                         help='Plot each unit flag',
@@ -262,5 +286,6 @@ if __name__ == '__main__':
                         action='store_true')
     args = parser.parse_args()
     main(prod_flag_value=args.prod,
+         plot_forecast_flag_value=args.plot_forecast,
          plot_each_unit_flag_value=args.plot_each_unit,
          plot_ma_flag_value=args.plot_ma)
