@@ -1,23 +1,23 @@
 steps:
   - name: python:3.10-slim
-    id: "install requirements"
+    id: 'install requirements'
     entrypoint: pip
-    args: ["install", "-r", "requirements.txt", "--user"]
-    dir: "forecasting/configs"
+    args: ['install', '-r', 'requirements.txt', '--user']
+    dir: 'forecasting/configs'
   - name: python:3.10-slim
-    id: "unit tests"
+    id: 'unit tests'
     entrypoint: python
-    args: ["-m", "pytest"]
-    dir: "forecasting/src/tests"
-  - name: "gcr.io/cloud-builders/docker"
-    id: "build container image"
-    args: ["build", "-f","serving.dockerfile","-t", "gcr.io/test-rig-349313/forecasting", "."]
-    dir: "forecasting"
-  - name: "gcr.io/cloud-builders/docker"
-    id: "push container image to container registry"
-    args: ["push", "gcr.io/test-rig-349313/forecasting"]
+    args: ['-m', 'pytest']
+    dir: 'forecasting/src/tests'
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build container image'
+    args: ['build', '-f','serving.dockerfile','-t', 'gcr.io/$PROJECT_ID/forecasting', '.']
+    dir: 'forecasting'
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push container image to container registry'
+    args: ['push', 'gcr.io/$PROJECT_ID/forecasting']
 options:
   machineType: 'E2_HIGHCPU_8'
 images:
-  - gcr.io/test-rig-349313/forecasting
+  - gcr.io/$PROJECT_ID/forecasting
 timeout: 3600s
