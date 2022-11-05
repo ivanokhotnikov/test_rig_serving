@@ -24,7 +24,7 @@ steps:
   - name: "gcr.io/cloud-builders/docker"
     id: "push container image to container registry"
     args: ["push", "gcr.io/$PROJECT_ID/forecasting:$SHORT_SHA"]
-  - name: "gcr.io/cloud-builder/kubectl"
+  - name: "gcr.io/cloud-builders/kubectl"
     id: "rolling deployment update"
     args:
       [
