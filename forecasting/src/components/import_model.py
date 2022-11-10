@@ -10,8 +10,10 @@ def import_model(file_name):
     if '.joblib' in file_name:
         blob = MODELS_BUCKET.get_blob(file_name)
         data_bytes = blob.download_as_bytes()
-        return load(io.BytesIO(data_bytes))
+        joblib_model = load(io.BytesIO(data_bytes))
+        return joblib_model
     fs = gcsfs.GCSFileSystem()
     with fs.open(f'gs://models_forecasting/{file_name}', 'rb') as model_file:
         model_gcs = h5py.File(model_file, 'r')
-        return load_model(model_gcs)
+        keras_model = load_model(model_gcs)
+    return keras_model

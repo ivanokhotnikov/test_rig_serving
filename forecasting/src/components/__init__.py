@@ -11,6 +11,7 @@ from .is_in_data_bucket import is_in_data_bucket
 from .is_name_valid import is_name_valid
 from .is_schema_valid import is_schema_valid
 from .plot_correlation_matrix import plot_correlation_matrix
+from .plot_data_distributions import plot_data_distributions
 from .plot_forecast import plot_forecast
 from .plot_unit import plot_unit
 from .predict import predict

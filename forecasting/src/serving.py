@@ -1,15 +1,14 @@
 import argparse
 
 import streamlit as st
-
 from components import (build_power_features, get_raw_data_files,
                         get_raw_data_folder_stats, import_forecast_features,
                         import_metrics, import_model, is_data_valid,
                         is_in_data_bucket, plot_correlation_matrix,
-                        plot_forecast, plot_unit, predict, read_latest_unit,
-                        read_processed_data, read_raw_data, read_unit_data,
-                        remove_step_zero, upload_new_raw_data_file,
-                        upload_processed_data)
+                        plot_data_distributions, plot_forecast, plot_unit,
+                        predict, read_latest_unit, read_processed_data,
+                        read_raw_data, read_unit_data, remove_step_zero,
+                        upload_new_raw_data_file, upload_processed_data)
 
 
 def main(prod_flag_value, plot_forecast_flag_value, plot_each_unit_flag_value,
@@ -137,7 +136,7 @@ def main(prod_flag_value, plot_forecast_flag_value, plot_each_unit_flag_value,
         unit = None
         unit = st.selectbox(
             'Select the unit number to display',
-            current_processed_df['UNIT'].unique(),
+            current_processed_df['UNIT'].unique().astype(int),
             index=len(current_processed_df['UNIT'].unique()) - 1,
         )
         unit_files_list = get_raw_data_files(unit)
@@ -211,62 +210,70 @@ def main(prod_flag_value, plot_forecast_flag_value, plot_each_unit_flag_value,
         progress_bar = st.progress(0)
         for idx, feature in enumerate(forecast_features, 1):
             progress_bar.progress(idx / len(forecast_features))
-            with st.spinner(f'Loading {feature} model'):
-                scaler = import_model(f'{feature}.joblib')
-                forecaster = import_model(f'{feature}.h5')
-            with st.spinner(f'Plotting {feature} forecast'):
-                st.subheader(
-                    f'{feature.lower().capitalize().replace("_", " ")}')
-                st.write('Model\'s forecast')
-                if uploaded_file is not None and not in_bucket and data_valid:
-                    new_data = new_interim_df
-                    new_forecast = predict(
-                        data_df=new_data,
-                        feature=feature,
-                        scaler=scaler,
-                        forecaster=forecaster,
-                    )
-                    forecast = predict(
-                        data_df=current_processed_df[-len(new_data):],
-                        feature=feature,
-                        scaler=scaler,
-                        forecaster=forecaster,
-                    )
-                else:
-                    new_data = None
-                    new_forecast = None
-                    latest_unit_df = read_latest_unit(current_processed_df)
-                    forecast = predict(
-                        data_df=current_processed_df[-len(latest_unit_df):],
-                        feature=feature,
-                        scaler=scaler,
-                        forecaster=forecaster,
-                    )
-                st.plotly_chart(
-                    plot_forecast(
-                        history_df=current_processed_df,
-                        forecast=forecast,
-                        feature=feature,
-                        new_forecast=new_forecast,
-                        new_data_df=new_data,
-                        rolling_window=rolling_window,
-                        plot_each_unit=plot_each_unit_flag,
-                    ),
-                    use_container_width=True,
+            scaler = import_model(f'{feature}.joblib')
+            forecaster = import_model(f'{feature}.h5')
+            st.header(f'{feature.lower().capitalize().replace("_", " ")}')
+            st.subheader('Model\'s forecast')
+            if uploaded_file is not None and not in_bucket and data_valid:
+                new_data = new_interim_df
+                new_forecast = predict(
+                    data_df=new_data,
+                    feature=feature,
+                    scaler=scaler,
+                    forecaster=forecaster,
                 )
-                st.write('Model\'s metrics at training')
-                metrics = import_metrics(feature)
-                col1, col2 = st.columns(2)
-                col1.metric(label=list(metrics.keys())[0].capitalize().replace(
-                    '_', ' '),
-                            value=f'{list(metrics.values())[0]:.2e}')
-                col2.metric(label=list(metrics.keys())[1].capitalize().replace(
-                    '_', ' '),
-                            value=f'{list(metrics.values())[1]:.2e}')
-                st.write('Model trained on:')
-                st.write(
-                    f'{list(metrics.keys())[2].capitalize().replace("_", " ")} {list(metrics.values())[2]}'
+                forecast = predict(
+                    data_df=current_processed_df[-len(new_data):],
+                    feature=feature,
+                    scaler=scaler,
+                    forecaster=forecaster,
                 )
+            else:
+                new_data = None
+                new_forecast = None
+                latest_unit_df = read_latest_unit(current_processed_df)
+                forecast = predict(
+                    data_df=current_processed_df[-len(latest_unit_df):],
+                    feature=feature,
+                    scaler=scaler,
+                    forecaster=forecaster,
+                )
+            st.plotly_chart(
+                plot_forecast(
+                    history_df=current_processed_df,
+                    forecast=forecast,
+                    feature=feature,
+                    new_forecast=new_forecast,
+                    new_data_df=new_data,
+                    rolling_window=rolling_window,
+                    plot_each_unit=plot_each_unit_flag,
+                ),
+                use_container_width=True,
+            )
+            st.subheader('Model\'s metrics at training')
+            metrics = import_metrics(feature)
+            col1, col2 = st.columns(2)
+            col1.metric(
+                label=list(metrics.keys())[0].capitalize().replace('_', ' '),
+                value=f'{list(metrics.values())[0]:.2e}',
+            )
+            col2.metric(
+                label=list(metrics.keys())[1].capitalize().replace('_', ' '),
+                value=f'{list(metrics.values())[1]:.2e}',
+            )
+            st.write('Model trained on:')
+            st.write(
+                f'{list(metrics.keys())[2].capitalize().replace("_", " ")} {list(metrics.values())[2]}'
+            )
+            st.subheader('Data distributions')
+            st.plotly_chart(
+                plot_data_distributions(feature,
+                                        current_processed_df,
+                                        forecast=forecast,
+                                        new_data_df=new_data,
+                                        new_forecast=new_forecast),
+                use_container_width=True,
+            )
             if not prod_flag: break
 
 
