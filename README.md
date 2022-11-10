@@ -10,9 +10,9 @@ Both applications (anomaly detector and forecaster) follow the same cloud archit
 
 # Links
 
-[Anomaly detector](https://anomaly-detector.hydreco.uk/)
+[Anomaly detector](https://34.105.255.15:80/)
 
-[Forecasting](https://forecasting.hydreco.uk/)
+[Forecasting](https://35.242.138.174:80/)
 
 # Usage
 
