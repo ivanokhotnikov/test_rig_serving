@@ -31,13 +31,14 @@ steps:
         "set",
         "image",
         "deployment/forecasting",
-        "gcr.io/$PROJECT_ID/forecasting:$SHORT_SHA",
+        "forecasting=forecasting:$SHORT_SHA",
       ]
     env:
     - "CLOUDSDK_COMPUTE_ZONE=europe-west2-a"
     - "CLOUDSDK_CONTAINER_CLUSTER=forecasting-cluster"
 options:
   machineType: "E2_HIGHCPU_8"
+  logging: CLOUD_LOGGING_ONLY
 images:
   - gcr.io/$PROJECT_ID/forecasting
 timeout: 3600s
