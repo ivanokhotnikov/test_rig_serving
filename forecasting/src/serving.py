@@ -15,7 +15,7 @@ def main(prod_flag_value, plot_forecast_flag_value, plot_each_unit_flag_value,
          plot_ma_flag_value):
     st.set_page_config(
         layout='centered',
-        page_title='Forecasting',
+        page_title='Forecaster',
         page_icon=
         'https://github.com/ivanokhotnikov/test_rig_serving/blob/master/images/fav.png?raw=True',
         initial_sidebar_state='collapsed',
@@ -55,9 +55,9 @@ def main(prod_flag_value, plot_forecast_flag_value, plot_each_unit_flag_value,
                 'The flag to colour or to shade out each unit in the forecast plot',
             )
             rolling_window_flag = st.checkbox(
-                'Plot moving avearge',
+                'Plot moving average',
                 value=plot_ma_flag_value,
-                help='The flag to cbuild and plot moving average',
+                help='The flag to build and plot moving average',
             )
             rolling_window = None
             if rolling_window_flag:
@@ -279,6 +279,7 @@ def main(prod_flag_value, plot_forecast_flag_value, plot_each_unit_flag_value,
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+
     parser.add_argument('--prod',
                         help='Production flag (processes all features if set)',
                         action='store_true')

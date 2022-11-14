@@ -81,7 +81,7 @@ def read_raw_data():
     final_df.drop(columns='DATE', inplace=True, errors='ignore')
     final_df.drop(columns=' DATE', inplace=True, errors='ignore')
     final_df.drop(columns='DURATION', inplace=True, errors='ignore')
-    logging.info(f'NAs, date and duration columns droped')
+    logging.info(f'NAs, date and duration columns dropped')
     final_df = remove_step_zero(final_df)
     logging.info(f'Step zero removed')
     final_df = build_time_features(final_df)

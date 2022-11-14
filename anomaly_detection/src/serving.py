@@ -10,7 +10,7 @@ from components.constants import LOOKBACK, ENGINEERED_FEATURES
 
 st.set_page_config(
     layout='centered',
-    page_title='Anomaly detector',
+    page_title='Detector',
     page_icon=
     'https://github.com/ivanokhotnikov/test_rig_serving/blob/master/images/fav.png?raw=True',
 )
