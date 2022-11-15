@@ -3,4 +3,4 @@ COPY /configs/requirements.txt app/requirements.txt
 RUN pip install --no-cache-dir -r app/requirements.txt
 COPY /src /app
 WORKDIR /app
-ENTRYPOINT ["streamlit", "run", "serving.py", "--server.port=8081", "--server.address=0.0.0.0", "--server.maxUploadSize=500", "--server.maxMessageSize=500", "--", "--prod", "--plot_forecast","--plot_each_unit", "--plot_ma"]
+ENTRYPOINT ["streamlit", "run", "serving.py", "--server.port=8081", "--server.address=0.0.0.0", "--server.maxUploadSize=500", "--server.maxMessageSize=500", "--", "--plot_forecast",]

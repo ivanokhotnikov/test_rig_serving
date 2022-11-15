@@ -1,18 +1,15 @@
 import numpy as np
 import plotly.graph_objects as go
-
 from components.constants import LOOKBACK
 
 
-def plot_forecast(
-    history_df,
-    forecast,
-    feature,
-    new_forecast=None,
-    rolling_window=None,
-    new_data_df=None,
-    plot_each_unit=False,
-) -> go.Figure:
+def plot_forecast(history_df,
+                  forecast,
+                  feature,
+                  new_forecast=None,
+                  rolling_window=None,
+                  new_data_df=None,
+                  plot_each_unit=False) -> go.Figure:
     fig = go.Figure()
     if plot_each_unit:
         for unit in history_df['UNIT'].unique():
@@ -95,6 +92,26 @@ def plot_forecast(
                     width=1.5,
                 ),
             )
+            if rolling_window is not None:
+                fig.add_scatter(
+                    x=np.arange(
+                        len(history_df) + len(new_data_df) +
+                        len(new_forecast) + 1) / 3600,
+                    y=np.convolve(
+                        np.concatenate((
+                            history_df[feature].values,
+                            new_data_df[feature].values,
+                            new_forecast.flatten(),
+                        )),
+                        np.ones(rolling_window) / rolling_window,
+                        'same',
+                    ),
+                    name='Moving average trend',
+                    line=dict(
+                        color='orange',
+                        width=1.75,
+                    ),
+                )
         fig.add_scatter(
             x=np.arange(
                 len(history_df) + LOOKBACK,
@@ -106,29 +123,6 @@ def plot_forecast(
                 width=1.5,
             ),
         )
-
-        if (rolling_window is not None) and (new_data_df
-                                             is not None) and (new_forecast
-                                                               is not None):
-            fig.add_scatter(
-                x=np.arange(
-                    len(history_df) + len(new_data_df) + len(new_forecast) + 1)
-                / 3600,
-                y=np.convolve(
-                    np.concatenate((
-                        history_df[feature].values,
-                        new_data_df[feature].values,
-                        new_forecast.flatten(),
-                    )),
-                    np.ones(rolling_window) / rolling_window,
-                    'same',
-                ),
-                name='Moving average trend',
-                line=dict(
-                    color='orange',
-                    width=1.75,
-                ),
-            )
     fig.update_layout(
         template='none',
         xaxis=dict(title='Total running time, hours'),

@@ -7,4 +7,5 @@ def plot_correlation_matrix(df, features):
             x=features,
             y=features,
             z=df[features].corr(method='pearson').values,
+            showscale=False
         ))
