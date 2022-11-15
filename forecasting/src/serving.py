@@ -184,10 +184,16 @@ def main(plot_forecast_flag_value, plot_each_unit_flag_value,
                 'https://raw.githubusercontent.com/ivanokhotnikov/test_rig_serving/master/images/serving.png'
             )
         st.header('Forecast')
+        if feature not in st.session_state:
+            st.session_state.feature = 'DRIVE_POWER'
+            st.session_state.disable_feature_selector = False
+        else:
+            st.session_state.disable_feature_selector = True
         feature = st.selectbox(
             'Select the feature',
             forecast_features,
-            index=0,
+            index=forecast_features.index(st.session_state.feature),
+            disabled=st.session_state.disable_feature_selector,
         )
         scaler = import_model(f'{feature}.joblib')
         forecaster = import_model(f'{feature}.h5')
