@@ -33,7 +33,7 @@ def plot_data_distributions(feature,
     fig = ff.create_distplot(data, labels, show_hist=False, show_rug=False)
     fig.update_layout(
         template='none',
-        title=f'{feature.capitalize().replace("_", " ")} distributions',
+        title=f'{feature.capitalize().replace("_", " ")} data distributions',
         legend=dict(orientation='h',
                     yanchor='bottom',
                     xanchor='right',

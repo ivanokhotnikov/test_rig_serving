@@ -11,7 +11,7 @@ from components import (build_power_features, get_raw_data_files,
                         upload_new_raw_data_file, upload_processed_data)
 
 
-def main(prod_flag_value, plot_forecast_flag_value, plot_each_unit_flag_value,
+def main(plot_forecast_flag_value, plot_each_unit_flag_value,
          plot_ma_flag_value):
     st.set_page_config(
         layout='centered',
@@ -43,11 +43,6 @@ def main(prod_flag_value, plot_forecast_flag_value, plot_each_unit_flag_value,
             help='The flag to plot forecast',
         )
         if plot_forecast_flag:
-            prod_flag = st.checkbox(
-                'Process all features',
-                value=prod_flag_value,
-                help='Process all features (load and forecast)',
-            )
             plot_each_unit_flag = st.checkbox(
                 'Plot each unit',
                 value=plot_each_unit_flag_value,
@@ -108,15 +103,14 @@ def main(prod_flag_value, plot_forecast_flag_value, plot_each_unit_flag_value,
                                 plot_unit(new_data_df, feature),
                                 use_container_width=True,
                             )
-    st.header('Data overview')
+    st.header('Data')
     if current_processed_df is None:
         current_processed_df = read_raw_data(
         ) if read_raw_flag else read_processed_data()
     forecast_features = import_forecast_features()
     tab1, tab2, tab3, tab4 = st.tabs(
-        ['Features Correlation', 'Raw Data', 'Processed Data', 'Statistics'])
+        ['Features correlation', 'Raw data', 'Processed data', 'Statistics'])
     with tab1:
-        st.subheader('Power features correlation')
         with st.spinner('Plotting correlation matrix'):
             st.plotly_chart(
                 plot_correlation_matrix(current_processed_df,
@@ -166,78 +160,64 @@ def main(prod_flag_value, plot_forecast_flag_value, plot_each_unit_flag_value,
                             use_container_width=True,
                         )
     with tab3:
-        st.subheader('Processed dataframe')
         st.dataframe(current_processed_df, use_container_width=True)
     with tab4:
-        st.subheader('Descriptive statistics')
         st.dataframe(current_processed_df[forecast_features].describe().T)
-        st.write(
-            'For more details see: \nhttps://test-data-profiling.hydreco.uk/')
-    st.header('Training overview')
-    tab1, tab2, tab3, tab4 = st.tabs([
-        'Training pipeline', 'Training DAG', 'Model architecture',
-        'Serving pipeline'
-    ])
-    with tab1:
-        st.subheader('Training pipeline')
-        st.image(
-            'https://raw.githubusercontent.com/ivanokhotnikov/test_rig_forecast_training/master/images/training_pipeline.png'
-        )
-    with tab2:
-        st.subheader('Directed acyclic training graph')
-        st.image(
-            'https://raw.githubusercontent.com/ivanokhotnikov/test_rig_forecast_training/master/images/training_dag.png'
-        )
-        st.write(
-            'For more implementation details see: \nhttps://github.com/ivanokhotnikov/test_rig_forecast_training'
-        )
-    with tab3:
-        st.subheader('Example of model architecture')
-        with st.spinner('Loading model example'):
-            forecaster = import_model('DRIVE_POWER.h5')
-        forecaster.summary(print_fn=lambda x: st.text(x))
-        st.write(
-            'For the architecture details see: \nhttps://en.wikipedia.org/wiki/Long_short-term_memory \nhttps://keras.io/api/layers/recurrent_layers/lstm/ \nhttp://www.bioinf.jku.at/publications/older/2604.pdf'
-        )
-    with tab4:
-        st.subheader('Serving pipeline')
-        st.image(
-            'https://raw.githubusercontent.com/ivanokhotnikov/test_rig_serving/master/images/serving.png'
-        )
+        st.write('For more details see: http://data-profiler.hydreco.uk/')
     if plot_forecast_flag:
+        st.header('Training')
+        tab1, tab2, tab3 = st.tabs(
+            ['Training pipeline', 'Training DAG', 'Serving pipeline'])
+        with tab1:
+            st.image(
+                'https://raw.githubusercontent.com/ivanokhotnikov/test_rig_forecast_training/master/images/training_pipeline.png'
+            )
+        with tab2:
+            st.image(
+                'https://raw.githubusercontent.com/ivanokhotnikov/test_rig_forecast_training/master/images/training_dag.png'
+            )
+            st.write(
+                'For more implementation details see: \nhttps://github.com/ivanokhotnikov/test_rig_forecast_training'
+            )
+        with tab3:
+            st.image(
+                'https://raw.githubusercontent.com/ivanokhotnikov/test_rig_serving/master/images/serving.png'
+            )
         st.header('Forecast')
-        st.write('Plotting feature forecasts')
-        progress_bar = st.progress(0)
-        for idx, feature in enumerate(forecast_features, 1):
-            progress_bar.progress(idx / len(forecast_features))
-            scaler = import_model(f'{feature}.joblib')
-            forecaster = import_model(f'{feature}.h5')
-            st.header(f'{feature.lower().capitalize().replace("_", " ")}')
-            st.subheader('Model\'s forecast')
-            if uploaded_file is not None and not in_bucket and data_valid:
-                new_data = new_interim_df
-                new_forecast = predict(
-                    data_df=new_data,
-                    feature=feature,
-                    scaler=scaler,
-                    forecaster=forecaster,
-                )
-                forecast = predict(
-                    data_df=current_processed_df[-len(new_data):],
-                    feature=feature,
-                    scaler=scaler,
-                    forecaster=forecaster,
-                )
-            else:
-                new_data = None
-                new_forecast = None
-                latest_unit_df = read_latest_unit(current_processed_df)
-                forecast = predict(
-                    data_df=current_processed_df[-len(latest_unit_df):],
-                    feature=feature,
-                    scaler=scaler,
-                    forecaster=forecaster,
-                )
+        feature = st.selectbox(
+            'Select the feature',
+            forecast_features,
+            index=0,
+        )
+        scaler = import_model(f'{feature}.joblib')
+        forecaster = import_model(f'{feature}.h5')
+        if uploaded_file is not None and not in_bucket and data_valid:
+            new_data = new_interim_df
+            new_forecast = predict(
+                data_df=new_data,
+                feature=feature,
+                scaler=scaler,
+                forecaster=forecaster,
+            )
+            forecast = predict(
+                data_df=current_processed_df[-len(new_data):],
+                feature=feature,
+                scaler=scaler,
+                forecaster=forecaster,
+            )
+        else:
+            new_data = None
+            new_forecast = None
+            latest_unit_df = read_latest_unit(current_processed_df)
+            forecast = predict(
+                data_df=current_processed_df[-len(latest_unit_df):],
+                feature=feature,
+                scaler=scaler,
+                forecaster=forecaster,
+            )
+        tab1, tab2, tab3, tab4 = st.tabs(
+            ['Forecast', 'Model', 'Metrics', 'Skew'])
+        with tab1:
             st.plotly_chart(
                 plot_forecast(
                     history_df=current_processed_df,
@@ -250,7 +230,12 @@ def main(prod_flag_value, plot_forecast_flag_value, plot_each_unit_flag_value,
                 ),
                 use_container_width=True,
             )
-            st.subheader('Model\'s metrics at training')
+        with tab2:
+            forecaster.summary(print_fn=lambda x: st.text(x))
+            st.write(
+                'For the architecture details see: \nhttps://en.wikipedia.org/wiki/Long_short-term_memory \nhttps://keras.io/api/layers/recurrent_layers/lstm/ \nhttp://www.bioinf.jku.at/publications/older/2604.pdf'
+            )
+        with tab3:
             metrics = import_metrics(feature)
             col1, col2 = st.columns(2)
             col1.metric(
@@ -265,7 +250,7 @@ def main(prod_flag_value, plot_forecast_flag_value, plot_each_unit_flag_value,
             st.write(
                 f'{list(metrics.keys())[2].capitalize().replace("_", " ")} {list(metrics.values())[2]}'
             )
-            st.subheader('Data distributions')
+        with tab4:
             st.plotly_chart(
                 plot_data_distributions(feature,
                                         current_processed_df,
@@ -274,15 +259,10 @@ def main(prod_flag_value, plot_forecast_flag_value, plot_each_unit_flag_value,
                                         new_forecast=new_forecast),
                 use_container_width=True,
             )
-            if not prod_flag: break
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-
-    parser.add_argument('--prod',
-                        help='Production flag (processes all features if set)',
-                        action='store_true')
     parser.add_argument('--plot_forecast',
                         help='Plot forecast flag',
                         action='store_true')
@@ -293,7 +273,6 @@ if __name__ == '__main__':
                         help='Plot moving average flag',
                         action='store_true')
     args = parser.parse_args()
-    main(prod_flag_value=args.prod,
-         plot_forecast_flag_value=args.plot_forecast,
+    main(plot_forecast_flag_value=args.plot_forecast,
          plot_each_unit_flag_value=args.plot_each_unit,
          plot_ma_flag_value=args.plot_ma)

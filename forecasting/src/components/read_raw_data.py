@@ -4,12 +4,14 @@ import logging
 import re
 
 import pandas as pd
+import streamlit as st
 
 
+@st.cache
 def read_raw_data():
     logging.basicConfig(level=logging.INFO)
     from components import (build_power_features, build_time_features,
-                            remove_step_zero, is_name_valid)
+                            is_name_valid, remove_step_zero)
     from components.constants import (FEATURES_NO_TIME, INTERIM_DATA_BUCKET,
                                       PROCESSED_DATA_BUCKET, RAW_DATA_BUCKET)
     final_df = pd.DataFrame()

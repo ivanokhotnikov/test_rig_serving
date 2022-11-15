@@ -1,7 +1,8 @@
 from components import create_sequences
 from components.constants import LOOKBACK
+import streamlit as st
 
-
+@st.cache
 def predict(data_df, feature, scaler, forecaster):
     scaled_data = scaler.transform(data_df[feature].values.reshape(-1, 1))
     sequenced_scaled_data = create_sequences(scaled_data,

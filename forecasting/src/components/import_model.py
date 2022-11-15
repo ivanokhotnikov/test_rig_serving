@@ -1,11 +1,14 @@
 import io
+
 import gcsfs
 import h5py
+import streamlit as st
+from components.constants import MODELS_BUCKET
 from joblib import load
 from keras.models import load_model
-from components.constants import MODELS_BUCKET
 
 
+@st.cache
 def import_model(file_name):
     if '.joblib' in file_name:
         blob = MODELS_BUCKET.get_blob(file_name)
