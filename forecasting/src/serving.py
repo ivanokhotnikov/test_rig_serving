@@ -3,12 +3,13 @@ import argparse
 import streamlit as st
 from components import (build_power_features, get_raw_data_files,
                         get_raw_data_folder_stats, import_forecast_features,
-                        import_metrics, import_model, is_data_valid,
-                        is_in_data_bucket, plot_correlation_matrix,
-                        plot_data_distributions, plot_forecast, plot_unit,
-                        predict, read_latest_unit, read_processed_data,
-                        read_raw_data, read_unit_data, remove_step_zero,
-                        upload_new_raw_data_file, upload_processed_data)
+                        import_forecaster, import_metrics, import_scaler,
+                        is_data_valid, is_in_data_bucket,
+                        plot_correlation_matrix, plot_data_distributions,
+                        plot_forecast, plot_unit, predict, read_latest_unit,
+                        read_processed_data, read_raw_data, read_unit_data,
+                        remove_step_zero, upload_new_raw_data_file,
+                        upload_processed_data)
 
 
 def main(plot_forecast_flag_value, plot_each_unit_flag_value,
@@ -184,19 +185,16 @@ def main(plot_forecast_flag_value, plot_each_unit_flag_value,
                 'https://raw.githubusercontent.com/ivanokhotnikov/test_rig_serving/master/images/serving.png'
             )
         st.header('Forecast')
-        if feature not in st.session_state:
+        if 'feature' not in st.session_state:
             st.session_state.feature = 'DRIVE_POWER'
-            st.session_state.disable_feature_selector = False
-        else:
-            st.session_state.disable_feature_selector = True
         feature = st.selectbox(
             'Select the feature',
             forecast_features,
             index=forecast_features.index(st.session_state.feature),
-            disabled=st.session_state.disable_feature_selector,
         )
-        scaler = import_model(f'{feature}.joblib')
-        forecaster = import_model(f'{feature}.h5')
+        st.session_state.feature = feature
+        scaler = import_scaler(feature)
+        forecaster = import_forecaster(feature)
         if uploaded_file is not None and not in_bucket and data_valid:
             new_data = new_interim_df
             new_forecast = predict(

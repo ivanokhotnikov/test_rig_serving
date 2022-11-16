@@ -1,7 +1,7 @@
-import streamlit as st
+from streamlit import cache
 
 
-@st.cache
+@cache
 def get_raw_data_folder_stats():
     from components import is_name_valid
     from components.constants import RAW_DATA_BUCKET

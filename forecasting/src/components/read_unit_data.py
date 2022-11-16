@@ -3,12 +3,11 @@ import logging
 import re
 
 import pandas as pd
-import streamlit as st
-from components.constants import (FEATURES_NO_TIME, RAW_DATA_BUCKET,
-                                  RAW_FORECAST_FEATURES)
+from components.constants import RAW_DATA_BUCKET
+from streamlit import cache
 
 
-@st.cache
+@cache
 def read_unit_data(file_name):
     data_blob = RAW_DATA_BUCKET.get_blob(file_name)
     df = pd.read_csv(

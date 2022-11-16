@@ -1,8 +1,9 @@
 import pytest
-from components import (plot_correlation_matrix, plot_forecast, plot_unit,
-                        read_latest_unit, import_forecast_features,
-                        read_unit_data, remove_step_zero, build_power_features,
-                        read_processed_data, import_model, predict)
+from components import (build_power_features, import_forecast_features,
+                        import_forecaster, import_scaler,
+                        plot_correlation_matrix, plot_forecast, plot_unit,
+                        predict, read_latest_unit, read_processed_data,
+                        read_unit_data, remove_step_zero)
 
 df = read_processed_data()
 features = import_forecast_features()
@@ -14,8 +15,8 @@ new_data_list = [new_interim_df, None]
 window_list = [3200, None]
 plot_each_unit_list = [True, False]
 
-forecaster = import_model(f'{features[0]}.h5')
-scaler = import_model(f'{features[0]}.joblib')
+forecaster = import_forecaster(features[0])
+scaler = import_scaler(features[0])
 
 
 def test_plot_correlation_matrix(capsys):

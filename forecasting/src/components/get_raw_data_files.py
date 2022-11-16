@@ -1,7 +1,9 @@
 import re
-import streamlit as st
 
-@st.cache
+from streamlit import cache
+
+
+@cache
 def get_raw_data_files(unit):
     from components import is_name_valid
     from components.constants import RAW_DATA_BUCKET

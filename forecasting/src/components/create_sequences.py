@@ -1,8 +1,10 @@
 import logging
 
 import numpy as np
+from streamlit import cache
 
 
+@cache
 def create_sequences(values, lookback=None, inference=False):
     if lookback is None:
         logging.error('Look back is not specified')

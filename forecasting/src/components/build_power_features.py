@@ -1,6 +1,9 @@
 import math
 
+from streamlit import cache
 
+
+@cache
 def build_power_features(df):
     df['DRIVE_POWER'] = (df['M1 SPEED'] * df['M1 TORQUE'] * math.pi / 30 /
                          1e3).astype(float)

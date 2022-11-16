@@ -1,5 +1,6 @@
 import pytest
-from components import import_forecast_features, import_metrics, import_model
+from components import (import_forecast_features, import_forecaster,
+                        import_metrics, import_scaler)
 
 
 def test_import_forecast_features(capsys):
@@ -8,18 +9,24 @@ def test_import_forecast_features(capsys):
     assert err == ''
 
 
-features_list = import_forecast_features()
-models = [f + ext for ext in ('.joblib', '.h5') for f in features_list]
+forecast_features = import_forecast_features()
 
 
-@pytest.mark.parametrize('model', models)
-def test_import_model(capsys, model):
-    import_model(model)
+@pytest.mark.parametrize('feature', forecast_features)
+def test_import_scaler(capsys, feature):
+    scaler = import_scaler(feature)
     out, err = capsys.readouterr()
     assert err == ''
 
 
-@pytest.mark.parametrize('feature', features_list)
+@pytest.mark.parametrize('feature', forecast_features)
+def test_import_forecaster(capsys, feature):
+    forecaster = import_forecaster(feature)
+    out, err = capsys.readouterr()
+    assert err == ''
+
+
+@pytest.mark.parametrize('feature', forecast_features)
 def test_import_metrics(capsys, feature):
     import_metrics(feature)
     out, err = capsys.readouterr()

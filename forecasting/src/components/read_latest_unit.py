@@ -1,11 +1,11 @@
 import io
 
 import pandas as pd
-import streamlit as st
 from components.constants import RAW_DATA_BUCKET
+from streamlit import cache
 
 
-@st.cache
+@cache
 def read_latest_unit(current_processed_df):
     latest = str(int(max(current_processed_df['UNIT'].unique())))
     for blob in RAW_DATA_BUCKET.list_blobs():
