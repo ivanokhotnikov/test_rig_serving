@@ -1,5 +1,5 @@
-from components import (read_unit_data, read_latest_unit, read_processed_data,
-                        read_raw_data)
+from components import (read_latest_unit, read_processed_data, read_raw_data,
+                        read_unit_data)
 
 
 def test_read_processed_data(capsys):

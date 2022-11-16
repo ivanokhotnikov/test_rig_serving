@@ -3,7 +3,7 @@ import re
 from streamlit import cache
 
 
-@cache
+@cache(allow_output_mutation=True)
 def get_raw_data_files(unit):
     from components import is_name_valid
     from components.constants import RAW_DATA_BUCKET

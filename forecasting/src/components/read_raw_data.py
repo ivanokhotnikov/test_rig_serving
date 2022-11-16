@@ -4,10 +4,8 @@ import logging
 import re
 
 import pandas as pd
-from streamlit import cache
 
 
-@cache
 def read_raw_data():
     logging.basicConfig(level=logging.INFO)
     from components import (build_power_features, build_time_features,
