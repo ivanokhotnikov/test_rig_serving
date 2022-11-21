@@ -1,5 +1,3 @@
-import argparse
-
 import streamlit as st
 from components import (
     build_power_features, get_raw_data_files, get_raw_data_folder_stats,
@@ -25,7 +23,7 @@ def main():
             'Upload raw data file',
             type=['csv'],
             help=
-            'The raw data file with the naming according to the test report convention, the format is HYD000XXX-R1_RAW.csv, where XXX - unit number',
+            'The raw data file with the naming according to the test report convention, the format is HYD000XXX-R1_RAW.csv, where XXX - unit number'
         )
         explore_data_flag = st.checkbox('Explore data',
                                         value=False,
@@ -138,15 +136,12 @@ def main():
             unit = st.selectbox(
                 'Select the unit number to display',
                 current_processed_df['UNIT'].unique().astype(int),
-                index=len(current_processed_df['UNIT'].unique()) - 1,
-            )
+                index=len(current_processed_df['UNIT'].unique()) - 1)
             unit_files_list = get_raw_data_files(unit)
             if unit is not None:
-                unit_file_name = st.selectbox(
-                    'Select the data file',
-                    unit_files_list,
-                    index=0,
-                )
+                unit_file_name = st.selectbox('Select the data file',
+                                              unit_files_list,
+                                              index=0)
             tab11, tab12 = st.tabs(['Dataframe', 'Plots'])
             with tab11:
                 st.subheader('Dataframe of the unit data')
@@ -233,14 +228,12 @@ def main():
         with tab4:
             metrics = import_metrics(feature)
             col1, col2 = st.columns(2)
-            col1.metric(
-                label=list(metrics.keys())[0].capitalize().replace('_', ' '),
-                value=f'{list(metrics.values())[0]:.2e}',
-            )
-            col2.metric(
-                label=list(metrics.keys())[1].capitalize().replace('_', ' '),
-                value=f'{list(metrics.values())[1]:.2e}',
-            )
+            col1.metric(label=list(metrics.keys())[0].capitalize().replace(
+                '_', ' '),
+                        value=f'{list(metrics.values())[0]:.2e}')
+            col2.metric(label=list(metrics.keys())[1].capitalize().replace(
+                '_', ' '),
+                        value=f'{list(metrics.values())[1]:.2e}')
             st.write(
                 f'{list(metrics.keys())[2].capitalize().replace("_", " ")} {list(metrics.values())[2]}'
             )
