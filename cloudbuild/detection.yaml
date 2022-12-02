@@ -34,7 +34,6 @@ steps:
         "gcr.io/$PROJECT_ID/anomaly-detection:latest",
       ]
 options:
-  machineType: "E2_HIGHCPU_8"
   logging: CLOUD_LOGGING_ONLY
 images:
   - gcr.io/$PROJECT_ID/anomaly-detection
