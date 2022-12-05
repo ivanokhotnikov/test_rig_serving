@@ -40,7 +40,7 @@ steps:
     args: ["rollout", "restart", "deployment/anomaly-detection"]
     env:
       - "CLOUDSDK_COMPUTE_ZONE=europe-west2-a"
-      - "CLOUDSDK_CONTAINER_CLUSTER=forcasting-cluster"
+      - "CLOUDSDK_CONTAINER_CLUSTER=forecasting-cluster"
 options:
   logging: CLOUD_LOGGING_ONLY
 images:
