@@ -2,16 +2,17 @@ import logging
 
 import numpy as np
 
-# def create_sequences(values, lookback=None):
-#     if lookback is None:
-#         logging.error('Look back is not specified')
-#     X = []
-#     for i in range(lookback, len(values)):
-#         X.append(values[i - lookback:i])
-#     return np.stack(X)
-
-
 def create_sequences(values, lookback=None):
+    """
+    The create_sequences function creates sequences from the input data. The function takes two arguments: values and lookback. Values is a list of floats, lookback is an integer. The output of the function is a numpy array with shape (number_of_sequences, lookback, 1).
+    
+    Args:
+        values: Pass the data to be converted into sequences
+        lookback=None: Specify the number of previous time steps to use as input variables to predict the next time period — in this case defaulted to none
+    
+    Returns:
+        A numpy array
+    """
     if lookback is None:
         logging.error('Look back is not specified')
     output = []

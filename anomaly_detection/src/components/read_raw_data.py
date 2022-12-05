@@ -7,6 +7,12 @@ import pandas as pd
 
 
 def read_raw_data():
+    """
+    The read_raw_data function reads the raw data from the RAW_DATA_BUCKET, converts it to a pandas DataFrame and uploads it to INTERIM_DATA_BUCKET. The function also removes rows with missing values, converts columns of strings to numeric values and adds time and power features, replaces spaces with underscores in the feature names.
+    
+    Returns:
+        A combined pandas dataframe with raw data
+    """
     from components import (build_power_features, build_time_features,
                             is_name_valid, remove_step_zero)
     from components.constants import (FEATURES_NO_TIME, INTERIM_DATA_BUCKET,
@@ -19,18 +25,14 @@ def read_raw_data():
         current_df = None
         try:
             if is_name_valid(blob):
-                current_df = pd.read_csv(
-                    io.BytesIO(data_bytes),
-                    header=0,
-                    index_col=False,
-                )
+                current_df = pd.read_csv(io.BytesIO(data_bytes),
+                                         header=0,
+                                         index_col=False)
             elif (blob.name.endswith('.xlsx')
                   or blob.name.endswith('.xls')) and 'RAW' in blob.name[3:]:
-                current_df = pd.read_excel(
-                    io.BytesIO(data_bytes),
-                    header=0,
-                    index_col=False,
-                )
+                current_df = pd.read_excel(io.BytesIO(data_bytes),
+                                           header=0,
+                                           index_col=False)
             else:
                 logging.info(f'{blob.name} is not a valid raw data file')
                 continue
@@ -50,11 +52,9 @@ def read_raw_data():
         del current_df
         gc.collect()
     try:
-        final_df.sort_values(
-            by=['UNIT', 'TEST'],
-            inplace=True,
-            ignore_index=True,
-        )
+        final_df.sort_values(by=['UNIT', 'TEST'],
+                             inplace=True,
+                             ignore_index=True)
         logging.info(f'Final dataframe sorted')
     except:
         logging.info('Cannot sort dataframe')
@@ -64,15 +64,8 @@ def read_raw_data():
         f'Interim dataframe uploaded to the {INTERIM_DATA_BUCKET.name} data storage'
     )
     final_df[FEATURES_NO_TIME] = final_df[FEATURES_NO_TIME].apply(
-        pd.to_numeric,
-        errors='coerce',
-        downcast='float',
-    )
-    final_df.dropna(
-        subset=FEATURES_NO_TIME,
-        axis=0,
-        inplace=True,
-    )
+        pd.to_numeric, errors='coerce', downcast='float')
+    final_df.dropna(subset=FEATURES_NO_TIME, axis=0, inplace=True)
     final_df.drop(columns='DATE', inplace=True, errors='ignore')
     final_df.drop(columns=' DATE', inplace=True, errors='ignore')
     final_df.drop(columns='DURATION', inplace=True, errors='ignore')

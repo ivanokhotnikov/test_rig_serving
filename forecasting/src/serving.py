@@ -117,60 +117,61 @@ def main():
                         st.plotly_chart(plot_unit(new_data_df, feature),
                                         use_container_width=True)
     if explore_data_flag:
-        st.header('Data')
+        st.header('Raw data')
         if current_processed_df is None:
             current_processed_df = read_raw_data(
             ) if read_raw_flag else read_processed_data()
         if forecast_features is None:
             forecast_features = import_forecast_features()
-        tab1, tab2, tab3, tab4 = st.tabs(
-            ['Raw', 'Processed', 'Statistics', 'Correlations'])
-        with tab1:
-            st.subheader('Raw unit data storage')
-            num_files, num_valid_files = get_raw_data_folder_stats()
-            col1, col2 = st.columns(2)
-            col1.metric(label='Number of raw files', value=num_files)
-            col2.metric(label='Number of raw files with valid names',
-                        value=num_valid_files)
-            unit = None
-            unit = st.selectbox(
-                'Select the unit number to display',
-                current_processed_df['UNIT'].unique().astype(int),
-                index=len(current_processed_df['UNIT'].unique()) - 1)
-            unit_files_list = get_raw_data_files(unit)
-            if unit is not None:
-                unit_file_name = st.selectbox('Select the data file',
-                                              unit_files_list,
-                                              index=0)
-            tab11, tab12 = st.tabs(['Dataframe', 'Plots'])
-            with tab11:
-                st.subheader('Dataframe of the unit data')
-                unit_df = read_unit_data(unit_file_name)
+        # tab1, tab2, tab3, tab4 = st.tabs(
+        #     ['Raw', 'Processed', 'Statistics', 'Correlations'])
+        # with tab1:
+        st.subheader('Raw unit data storage')
+        num_files, num_valid_files = get_raw_data_folder_stats()
+        col1, col2 = st.columns(2)
+        col1.metric(label='Number of raw files', value=num_files)
+        col2.metric(label='Number of raw files with valid names',
+                    value=num_valid_files)
+        unit = None
+        unit = st.selectbox(
+            'Select the unit number to display',
+            current_processed_df['UNIT'].unique().astype(int),
+            index=len(current_processed_df['UNIT'].unique()) - 1)
+        unit_files_list = get_raw_data_files(unit)
+        if unit is not None:
+            unit_file_name = st.selectbox('Select the data file',
+                                            unit_files_list,
+                                            index=0)
+        tab11, tab12 = st.tabs(['Dataframe', 'Plots'])
+        with tab11:
+            st.subheader('Dataframe of the unit data')
+            unit_df = read_unit_data(unit_file_name)
+            st.write(unit_file_name)
+            st.dataframe(unit_df, use_container_width=True)
+        with tab12:
+            st.subheader('Plots of the raw unit data')
+            with st.spinner('Plotting the raw data'):
                 st.write(unit_file_name)
-                st.dataframe(unit_df, use_container_width=True)
-            with tab12:
-                st.subheader('Plots of the raw unit data')
-                with st.spinner('Plotting the raw data'):
-                    st.write(unit_file_name)
-                    for feature in unit_df.columns:
-                        if feature not in ('TIME', 'DURATION', 'NOT USED',
-                                           'NOT_USED', 'UNIT', 'TEST',
-                                           'RUNNING_SECONDS', 'RUNNING_HOURS',
-                                           ' DATE', 'DATE'):
-                            st.plotly_chart(plot_unit(unit_df, feature),
-                                            use_container_width=True)
-        with tab2:
-            st.dataframe(current_processed_df, use_container_width=True)
-        with tab3:
-            st.dataframe(current_processed_df[forecast_features].describe().T)
-            st.write('For more details see: http://data-profiler.hydreco.uk/')
-        with tab4:
-            st.plotly_chart(plot_correlation_matrix(current_processed_df,
-                                                    forecast_features),
-                            use_container_width=True)
-            st.write(
-                'For reference and implementation see: \nhttps://en.wikipedia.org/wiki/Pearson_correlation_coefficient \nhttps://pandas.pydata.org/docs/reference/api/pandas.DataFrame.corr.html'
-            )
+                for feature in unit_df.columns:
+                    if feature not in ('TIME', 'DURATION', 'NOT USED',
+                                        'NOT_USED', 'UNIT', 'TEST',
+                                        'RUNNING_SECONDS', 'RUNNING_HOURS',
+                                        ' DATE', 'DATE'):
+                        st.plotly_chart(plot_unit(unit_df, feature),
+                                        use_container_width=True)
+        st.write('For more details on the processed data see: http://data-profiler.hydreco.uk/')
+        # with tab2:
+        #     st.dataframe(current_processed_df, use_container_width=True)
+        # with tab3:
+        #     st.dataframe(current_processed_df[forecast_features].describe().T)
+        #     st.write('For more details see: http://data-profiler.hydreco.uk/')
+        # with tab4:
+        #     st.plotly_chart(plot_correlation_matrix(current_processed_df,
+        #                                             forecast_features),
+        #                     use_container_width=True)
+        #     st.write(
+        #         'For reference and implementation see: \nhttps://en.wikipedia.org/wiki/Pearson_correlation_coefficient \nhttps://pandas.pydata.org/docs/reference/api/pandas.DataFrame.corr.html'
+        #     )
     if plot_forecast_flag:
         st.header('Forecast')
         if current_processed_df is None:

@@ -5,6 +5,16 @@ from streamlit import cache
 
 @cache
 def build_power_features(df):
+    """
+    The build_power_features function builds the power features for the dataframe. It takes in a dataframe and returns a new dataframe with added columns for each of 
+    the power features.
+    
+    Args:
+        df: Pass the dataframe to the function
+    
+    Returns:
+        A dataframe with the power features added
+    """
     df['DRIVE_POWER'] = (df['M1 SPEED'] * df['M1 TORQUE'] * math.pi / 30 /
                          1e3).astype(float)
     df['LOAD_POWER'] = abs(df['D1 RPM'] * df['D1 TORQUE'] * math.pi / 30 /

@@ -9,6 +9,19 @@ def plot_data_distributions(feature,
                             forecast=None,
                             new_data_df=None,
                             new_forecast=None):
+    """
+    The plot_data_distributions function plots the distribution of data for a given feature. It takes as input: the feature to plot, the processed_df DataFrame containing the training and test data for that feature.
+    
+    Args:
+        feature: Select the feature to plot
+        processed_df: A pandas dataframe with the processed data
+        forecast=None: An array with the forecast
+        new_data_df=None: A pandas dataframe with the new data
+        new_forecast=None: An array with the new forecast
+    
+    Returns:
+        A plotly figure
+    """
     blob = MODELS_BUCKET.get_blob(f'{feature}_params.json')
     train_data_size = json.loads(blob.download_as_bytes())['train_data_size']
     train_data = processed_df.loc[:int(len(processed_df) * train_data_size),
@@ -19,8 +32,7 @@ def plot_data_distributions(feature,
     data = [train_data, test_data, forecast]
     labels = [
         f'Train, {train_data_size*100:.1f}%',
-        f'Test, {(1-train_data_size)*100:.1f}%',
-        'Forecast',
+        f'Test, {(1-train_data_size)*100:.1f}%', 'Forecast'
     ]
     if new_data_df is not None:
         new_data = new_data_df[feature].values.flatten()
@@ -38,6 +50,5 @@ def plot_data_distributions(feature,
                     yanchor='bottom',
                     xanchor='right',
                     x=1,
-                    y=1.01),
-    )
+                    y=1.01))
     return fig

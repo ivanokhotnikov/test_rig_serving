@@ -9,48 +9,54 @@ def plot_forecast(history_df,
                   new_forecast=None,
                   rolling_window=None,
                   new_data_df=None,
-                  plot_each_unit=False) -> go.Figure:
+                  plot_each_unit=False):
+    """
+    The plot_forecast function plots the history of a feature and its forecast. It takes as input: - history_df, which is a dataframe containing the historical values of the feature; - forecast, which is an array containing predicted values for future time steps; and new_data_df (optional), which contains new data that has arrived since last training.
+    
+    Args:
+        history_df: A datafrme with the historical data
+        forecast: An array with the forecast
+        feature: Specify the feature to be plotted
+        new_forecast=None: A foreast array with the new data
+        rolling_window=None: Smoothing window
+        new_data_df=None: A dataframe with the new data
+        plot_each_unit=False: Plot the history and forecast for all units in a single figure
+    
+    Returns:
+        A plotly figure object
+    """
     fig = go.Figure()
     if plot_each_unit:
         for unit in history_df['UNIT'].unique():
             for test in history_df[history_df['UNIT'] ==
                                    unit]['TEST'].unique():
-                fig.add_scatter(
-                    x=np.array(
-                        history_df[(history_df['UNIT'] == unit)
-                                   & (history_df['TEST'] == test)].index) /
-                    3600,
-                    y=history_df[(history_df['UNIT'] == unit)
-                                 & (history_df['TEST'] == test)]
-                    [feature].values.flatten(),
-                    line=dict(width=1.5, ),
-                    opacity=0.5,
-                    name=f'{unit}-{test}',
-                    showlegend=False,
-                )
+                fig.add_scatter(x=np.array(
+                    history_df[(history_df['UNIT'] == unit)
+                               & (history_df['TEST'] == test)].index) / 3600,
+                                y=history_df[(history_df['UNIT'] == unit)
+                                             & (history_df['TEST'] == test)]
+                                [feature].values.flatten(),
+                                line=dict(width=1.5, ),
+                                opacity=0.5,
+                                name=f'{unit}-{test}',
+                                showlegend=False)
     else:
-        fig.add_scatter(
-            x=np.arange(len(history_df)) / 3600,
-            y=history_df[feature].values.flatten(),
-            line=dict(
-                width=1.5,
-                color='gray',
-            ),
-            opacity=0.5,
-            name='History',
-            showlegend=True,
-        )
+        fig.add_scatter(x=np.arange(len(history_df)) / 3600,
+                        y=history_df[feature].values.flatten(),
+                        line=dict(
+                            width=1.5,
+                            color='gray',
+                        ),
+                        opacity=0.5,
+                        name='History',
+                        showlegend=True)
     if new_data_df is None:
-        fig.add_scatter(
-            x=np.arange(len(history_df),
-                        len(history_df) + len(forecast) + 1) / 3600,
-            y=forecast.flatten(),
-            name='Forecast',
-            line=dict(
-                color='indianred',
-                width=1.5,
-            ),
-        )
+        fig.add_scatter(x=np.arange(len(history_df),
+                                    len(history_df) + len(forecast) + 1) /
+                        3600,
+                        y=forecast.flatten(),
+                        name='Forecast',
+                        line=dict(color='indianred', width=1.5))
         if rolling_window:
             fig.add_scatter(
                 x=np.arange(len(history_df) + len(forecast) + 1) / 3600,
@@ -59,70 +65,45 @@ def plot_forecast(history_df,
                         history_df[feature].values,
                         forecast.flatten(),
                     )),
-                    np.ones(rolling_window) / rolling_window,
-                    'same',
-                ),
+                    np.ones(rolling_window) / rolling_window, 'same'),
                 name='Moving average trend',
-                line=dict(
-                    color='orange',
-                    width=1.75,
-                ),
-            )
+                line=dict(color='orange', width=1.75))
     else:
-        fig.add_scatter(
-            x=np.arange(len(history_df),
-                        len(history_df) + len(new_data_df) + 1) / 3600,
-            y=new_data_df[feature].values.flatten(),
-            name='New data',
-            line=dict(
-                color='steelblue',
-                width=1.5,
-            ),
-        )
+        fig.add_scatter(x=np.arange(len(history_df),
+                                    len(history_df) + len(new_data_df) + 1) /
+                        3600,
+                        y=new_data_df[feature].values.flatten(),
+                        name='New data',
+                        line=dict(color='steelblue', width=1.5))
         if new_forecast is not None:
-            fig.add_scatter(
-                x=np.arange(
-                    len(history_df) + len(new_data_df),
-                    len(history_df) + len(new_data_df) + len(new_forecast) + 1)
-                / 3600,
-                y=new_forecast.flatten(),
-                name='New forecast',
-                line=dict(
-                    color='seagreen',
-                    width=1.5,
-                ),
-            )
+            fig.add_scatter(x=np.arange(
+                len(history_df) + len(new_data_df),
+                len(history_df) + len(new_data_df) + len(new_forecast) + 1) /
+                            3600,
+                            y=new_forecast.flatten(),
+                            name='New forecast',
+                            line=dict(color='seagreen', width=1.5))
             if rolling_window is not None:
-                fig.add_scatter(
-                    x=np.arange(
-                        len(history_df) + len(new_data_df) +
-                        len(new_forecast) + 1) / 3600,
-                    y=np.convolve(
-                        np.concatenate((
-                            history_df[feature].values,
-                            new_data_df[feature].values,
-                            new_forecast.flatten(),
-                        )),
-                        np.ones(rolling_window) / rolling_window,
-                        'same',
-                    ),
-                    name='Moving average trend',
-                    line=dict(
-                        color='orange',
-                        width=1.75,
-                    ),
-                )
-        fig.add_scatter(
-            x=np.arange(
-                len(history_df) + LOOKBACK,
-                LOOKBACK + len(history_df) + len(forecast) + 1) / 3600,
-            y=forecast.flatten(),
-            name='Old forecast',
-            line=dict(
-                color='indianred',
-                width=1.5,
-            ),
-        )
+                fig.add_scatter(x=np.arange(
+                    len(history_df) + len(new_data_df) + len(new_forecast) + 1)
+                                / 3600,
+                                y=np.convolve(
+                                    np.concatenate((
+                                        history_df[feature].values,
+                                        new_data_df[feature].values,
+                                        new_forecast.flatten(),
+                                    )),
+                                    np.ones(rolling_window) / rolling_window,
+                                    'same',
+                                ),
+                                name='Moving average trend',
+                                line=dict(color='orange', width=1.75))
+        fig.add_scatter(x=np.arange(
+            len(history_df) + LOOKBACK,
+            LOOKBACK + len(history_df) + len(forecast) + 1) / 3600,
+                        y=forecast.flatten(),
+                        name='Old forecast',
+                        line=dict(color='indianred', width=1.5))
     fig.update_layout(
         template='none',
         xaxis=dict(title='Total running time, hours'),
@@ -134,6 +115,5 @@ def plot_forecast(history_df,
                     yanchor='bottom',
                     xanchor='right',
                     x=1,
-                    y=1.01),
-    )
+                    y=1.01))
     return fig

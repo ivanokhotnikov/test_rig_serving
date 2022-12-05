@@ -20,3 +20,4 @@ forecasting/Dockerfile*
 *.drawio
 *notebooks
 *nbs
+*misc

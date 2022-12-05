@@ -32,3 +32,5 @@ ml_detector_build.py
 nn_detector_build.py
 app.yaml
 Makefile
+*nbs
+*misc
