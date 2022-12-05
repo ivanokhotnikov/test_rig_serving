@@ -35,7 +35,7 @@ steps:
       ]
     env:
       - "CLOUDSDK_COMPUTE_ZONE=europe-west2-a"
-      - "CLOUDSDK_CONTAINER_CLUSTER=anomaly-detection-cluster"
+      - "CLOUDSDK_CONTAINER_CLUSTER=forecasting-cluster"
   - name: "gcr.io/cloud-builders/kubectl"
     args: ["rollout", "restart", "deployment/anomaly-detection"]
     env:
