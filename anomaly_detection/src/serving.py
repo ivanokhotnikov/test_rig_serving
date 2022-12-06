@@ -1,18 +1,17 @@
 import numpy as np
 import streamlit as st
-
-from components import (build_power_features, import_model, is_data_valid,
-                        create_sequences, is_in_data_bucket, plot_anomalies,
+from components import (build_power_features, create_sequences, import_model,
+                        is_data_valid, is_in_data_bucket, plot_anomalies,
                         plot_unit, read_data_file, read_raw_data,
                         remove_step_zero, upload_new_raw_data_file,
                         upload_processed_data)
-from components.constants import LOOKBACK, ENGINEERED_FEATURES
+from components.constants import ENGINEERED_FEATURES, LOOKBACK
 
 st.set_page_config(
     layout='centered',
     page_title='Detector',
     page_icon=
-    'https://github.com/ivanokhotnikov/test_rig_serving/blob/master/images/fav.png?raw=True',
+    'https://github.com/ivanokhotnikov/test_rig_serving/blob/master/images/fav.png?raw=True'
 )
 
 
@@ -67,54 +66,43 @@ def main():
                     index=0,
                 )
                 if algorithm is not None:
-                    detecting_bar = st.progress(0)
-                    for idx, feature in enumerate(ENGINEERED_FEATURES, 1):
-                        detecting_bar.progress(idx / len(ENGINEERED_FEATURES))
-                        detector = import_model(f'{algorithm}_{feature}')
-                        if algorithm == 'ConvolutionalAutoencoder':
-                            scaler = import_model(
-                                f'{algorithm}_{feature}_scaler')
-                            scaled_data = scaler.transform(
+                    feature = st.selectbox('Select the feature',
+                                           ENGINEERED_FEATURES,
+                                           index=0)
+                    detector = import_model(f'{algorithm}_{feature}')
+                    if algorithm == 'ConvolutionalAutoencoder':
+                        scaler = import_model(f'{algorithm}_{feature}_scaler')
+                        scaled_data = scaler.transform(
+                            new_interim_df[feature.replace(
+                                " ", "_")].values.reshape(-1, 1))
+                        x = create_sequences(scaled_data, lookback=LOOKBACK)
+                        pred = detector.predict(x)
+                        threshold = import_model(
+                            f'{algorithm}_{feature}_threshold')
+                        test_mae_loss = np.mean(np.abs(pred - x), axis=1)
+                        test_mae_loss = test_mae_loss.reshape((-1))
+                        anomalies = test_mae_loss > 0.5 * threshold
+                        anomalous_data_indices = []
+                        for data_idx in range(LOOKBACK - 1,
+                                              len(scaled_data) - LOOKBACK + 1):
+                            if np.all(anomalies[data_idx - LOOKBACK +
+                                                1:data_idx]):
+                                anomalous_data_indices.append(data_idx)
+                        new_interim_df.loc[:,
+                                           f'ANOMALY_{feature.replace(" ","_")}'] = 1
+                        new_interim_df.loc[
+                            anomalous_data_indices,
+                            f'ANOMALY_{feature.replace(" ","_")}'] = -1
+                    else:
+                        new_interim_df[
+                            f'ANOMALY_{feature.replace(" ","_")}'] = detector.predict(
                                 new_interim_df[feature.replace(
                                     " ", "_")].values.reshape(-1, 1))
-                            x = create_sequences(scaled_data,
-                                                 lookback=LOOKBACK)
-                            pred = detector.predict(x)
-                            threshold = import_model(
-                                f'{algorithm}_{feature}_threshold')
-                            test_mae_loss = np.mean(np.abs(pred - x), axis=1)
-                            test_mae_loss = test_mae_loss.reshape((-1))
-                            anomalies = test_mae_loss > threshold
-                            anomalous_data_indices = []
-                            for data_idx in range(
-                                    LOOKBACK - 1,
-                                    len(scaled_data) - LOOKBACK + 1,
-                            ):
-                                if np.all(anomalies[data_idx - LOOKBACK +
-                                                    1:data_idx]):
-                                    anomalous_data_indices.append(data_idx)
-                            new_interim_df.loc[:,
-                                               f'ANOMALY_{feature.replace(" ","_")}'] = 1
-                            new_interim_df.loc[
-                                anomalous_data_indices,
-                                f'ANOMALY_{feature.replace(" ","_")}'] = -1
-                        else:
-                            new_interim_df[
-                                f'ANOMALY_{feature.replace(" ","_")}'] = detector.predict(
-                                    new_interim_df[feature.replace(
-                                        " ", "_")].values.reshape(-1, 1))
-                        try:
-                            st.plotly_chart(
-                                plot_anomalies(
-                                    new_interim_df,
-                                    unit=new_interim_df.iloc[0]['UNIT'],
-                                    test=1,
-                                    feature=feature))
-                        except:
-                            st.write(
-                                f'No anomalies found in unit {new_interim_df.iloc[0]["UNIT"]} for {feature} with {algorithm}'
-                            )
-                            continue
+                    fig = plot_anomalies(new_interim_df,
+                                         unit=new_interim_df.iloc[0]['UNIT'],
+                                         feature=feature)
+                    if fig is not None:
+                        st.plotly_chart(fig)
 
 
 if __name__ == '__main__':

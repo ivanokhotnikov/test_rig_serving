@@ -1,11 +1,12 @@
 import gc
-import io
 import logging
 import re
 
 import pandas as pd
+from streamlit import cache
 
 
+@cache
 def read_raw_data():
     """
     The read_raw_data function reads the raw data from the RAW_DATA_BUCKET, converts it to a pandas DataFrame and uploads it to INTERIM_DATA_BUCKET. The function also removes rows with missing values, converts columns of strings to numeric values and adds time and power features, replaces spaces with underscores in the feature names.
@@ -21,18 +22,18 @@ def read_raw_data():
     final_df = pd.DataFrame()
     units = []
     for blob in list(RAW_DATA_BUCKET.list_blobs()):
-        data_bytes = blob.download_as_bytes()
         current_df = None
         try:
             if is_name_valid(blob):
-                current_df = pd.read_csv(io.BytesIO(data_bytes),
+                current_df = pd.read_csv(f'gs://test_rig_raw_data/{blob.name}',
                                          header=0,
                                          index_col=False)
             elif (blob.name.endswith('.xlsx')
                   or blob.name.endswith('.xls')) and 'RAW' in blob.name[3:]:
-                current_df = pd.read_excel(io.BytesIO(data_bytes),
-                                           header=0,
-                                           index_col=False)
+                current_df = pd.read_excel(
+                    f'gs://test_rig_raw_data/{blob.name}',
+                    header=0,
+                    index_col=False)
             else:
                 logging.info(f'{blob.name} is not a valid raw data file')
                 continue
@@ -58,8 +59,7 @@ def read_raw_data():
         logging.info(f'Final dataframe sorted')
     except:
         logging.info('Cannot sort dataframe')
-    INTERIM_DATA_BUCKET.blob('interim_data.csv').upload_from_string(
-        final_df.to_csv(index=False), content_type='text/csv')
+    final_df.to_csv('gs://test_rig_interim_data/interim_data.csv', index=False)
     logging.info(
         f'Interim dataframe uploaded to the {INTERIM_DATA_BUCKET.name} data storage'
     )
@@ -78,8 +78,8 @@ def read_raw_data():
     logging.info(f'Power features added')
     final_df.columns = final_df.columns.str.lstrip()
     final_df.columns = final_df.columns.str.replace(' ', '_')
-    PROCESSED_DATA_BUCKET.blob('processed_data.csv').upload_from_string(
-        final_df.to_csv(index=False), content_type='text/csv')
+    final_df.to_csv('gs://test_rig_processed_data/processed_data.csv',
+                    index=False)
     logging.info(
         f'Processed dataframe uploaded to the {PROCESSED_DATA_BUCKET.name} data storage'
     )

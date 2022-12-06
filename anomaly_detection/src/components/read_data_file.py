@@ -1,12 +1,12 @@
-import io
 import logging
 import re
 
 import pandas as pd
-from components.constants import (FEATURES_NO_TIME, RAW_DATA_BUCKET,
-                                  RAW_FORECAST_FEATURES)
+from components.constants import (FEATURES_NO_TIME, RAW_FORECAST_FEATURES)
+from streamlit import cache
 
 
+@cache
 def read_data_file(file):
     """
     The read_data_file function reads a CSV file from the raw data bucket, applies the preprocessing: convert to numeric, drop na values, parse unit number from file.name, and returns a Pandas DataFrame. The function accepts one argument: `file`, which is an object representing a single blob in our raw data bucket.
@@ -17,8 +17,7 @@ def read_data_file(file):
     Returns:
         A pandas dataframe object
     """
-    data_blob = RAW_DATA_BUCKET.get_blob(file.name)
-    df = pd.read_csv(io.BytesIO(data_blob.download_as_string()),
+    df = pd.read_csv(f'gs://test_rig_raw_data/{file.name}',
                      usecols=RAW_FORECAST_FEATURES,
                      index_col=False)
     df[FEATURES_NO_TIME] = df[FEATURES_NO_TIME].apply(pd.to_numeric,

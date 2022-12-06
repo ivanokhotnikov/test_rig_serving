@@ -1,7 +1,10 @@
 import logging
 
 import numpy as np
+from streamlit import cache
 
+
+@cache
 def create_sequences(values, lookback=None):
     """
     The create_sequences function creates sequences from the input data. The function takes two arguments: values and lookback. Values is a list of floats, lookback is an integer. The output of the function is a numpy array with shape (number_of_sequences, lookback, 1).

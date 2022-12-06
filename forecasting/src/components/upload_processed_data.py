@@ -1,6 +1,3 @@
-from components.constants import PROCESSED_DATA_BUCKET
-
-
 def upload_processed_data(df):
     """
     The upload_processed_data function uploads the processed data to a GCS bucket. The function takes in a Pandas DataFrame as an argument and returns nothing.
