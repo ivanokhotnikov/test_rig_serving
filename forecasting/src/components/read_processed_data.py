@@ -1,9 +1,8 @@
-import io
-
 import pandas as pd
-from components.constants import PROCESSED_DATA_BUCKET
+from streamlit import cache
 
 
+@cache
 def read_processed_data():
     """
     The read_processed_data function reads the processed data from a CSV file in a GCS bucket. The function returns the data as a Pandas DataFrame.
@@ -11,8 +10,7 @@ def read_processed_data():
     Returns:
         A pandas dataframe
     """
-    data_blob = PROCESSED_DATA_BUCKET.get_blob('processed_data.csv')
-    return pd.read_csv(io.BytesIO(data_blob.download_as_bytes()),
+    return pd.read_csv('gs://test_rig_processed_data/processed_data.csv',
                        header=0,
                        index_col=False,
                        low_memory=False)

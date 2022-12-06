@@ -1,14 +1,20 @@
 import streamlit as st
-from components import (
-    build_power_features, get_raw_data_files, get_raw_data_folder_stats,
-    import_forecast_features, import_forecaster, import_metrics, import_scaler,
-    is_data_valid, is_in_data_bucket, plot_correlation_matrix,
-    plot_data_distributions, plot_forecast, plot_unit, predict,
-    read_latest_unit, read_processed_data, read_raw_data, read_unit_data,
-    remove_step_zero, upload_new_raw_data_file, upload_processed_data)
+from components import (build_power_features, get_raw_data_files,
+                        get_raw_data_folder_stats, import_forecast_features,
+                        import_forecaster, import_metrics, import_scaler,
+                        is_data_valid, is_in_data_bucket,
+                        plot_data_distributions, plot_forecast, plot_unit,
+                        predict, read_latest_unit, read_processed_data,
+                        read_raw_data, read_unit_data, remove_step_zero,
+                        upload_new_raw_data_file, upload_processed_data)
 
 
 def main():
+    """
+    The main function is the entry point for the program.
+    It calls all of the other functions in order to perform its tasks.
+    
+    """
     st.set_page_config(
         layout='centered',
         page_title='Forecaster',
@@ -29,13 +35,6 @@ def main():
                                         value=False,
                                         help='Show data details',
                                         key='explore_data_flag')
-        if explore_data_flag:
-            read_raw_flag = st.checkbox(
-                'Read raw data',
-                value=False,
-                help=
-                'When checked, reads and does initial preprocessing of every raw data file in the data storage. When unchecked, imports the processed data file from the data storage',
-                key='read_raw_flag')
         st.header('Forecast')
         plot_forecast_flag = st.checkbox('Plot forecasts',
                                          value=False,
@@ -119,13 +118,9 @@ def main():
     if explore_data_flag:
         st.header('Raw data')
         if current_processed_df is None:
-            current_processed_df = read_raw_data(
-            ) if read_raw_flag else read_processed_data()
+            current_processed_df = read_processed_data()
         if forecast_features is None:
             forecast_features = import_forecast_features()
-        # tab1, tab2, tab3, tab4 = st.tabs(
-        #     ['Raw', 'Processed', 'Statistics', 'Correlations'])
-        # with tab1:
         st.subheader('Raw unit data storage')
         num_files, num_valid_files = get_raw_data_folder_stats()
         col1, col2 = st.columns(2)
@@ -162,18 +157,6 @@ def main():
         st.write(
             'For more details on the processed data see: http://data-profiler.hydreco.uk/'
         )
-        # with tab2:
-        #     st.dataframe(current_processed_df, use_container_width=True)
-        # with tab3:
-        #     st.dataframe(current_processed_df[forecast_features].describe().T)
-        #     st.write('For more details see: http://data-profiler.hydreco.uk/')
-        # with tab4:
-        #     st.plotly_chart(plot_correlation_matrix(current_processed_df,
-        #                                             forecast_features),
-        #                     use_container_width=True)
-        #     st.write(
-        #         'For reference and implementation see: \nhttps://en.wikipedia.org/wiki/Pearson_correlation_coefficient \nhttps://pandas.pydata.org/docs/reference/api/pandas.DataFrame.corr.html'
-        #     )
     if plot_forecast_flag:
         st.header('Forecast')
         if current_processed_df is None:

@@ -1,9 +1,7 @@
-import io
 import logging
 import re
 
 import pandas as pd
-from components.constants import RAW_DATA_BUCKET
 from streamlit import cache
 
 
@@ -18,8 +16,7 @@ def read_unit_data(file_name):
     Returns:
         A pandas dataframe with the unit data
     """
-    data_blob = RAW_DATA_BUCKET.get_blob(file_name)
-    df = pd.read_csv(io.BytesIO(data_blob.download_as_bytes()),
+    df = pd.read_csv(f'gs://test_rig_raw_data/{file_name}',
                      index_col=False,
                      header=0)
     df = df.dropna(axis=0)
