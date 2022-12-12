@@ -3,10 +3,8 @@ import logging
 import re
 
 import pandas as pd
-from streamlit import cache
 
 
-@cache
 def read_raw_data():
     """
     The read_raw_data function reads the raw data from the RAW_DATA_BUCKET, converts it to a pandas DataFrame and uploads it to INTERIM_DATA_BUCKET. The function also removes rows with missing values, converts columns of strings to numeric values and adds time and power features, replaces spaces with underscores in the feature names.
