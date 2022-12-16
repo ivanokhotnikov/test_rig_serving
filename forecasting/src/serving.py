@@ -23,6 +23,9 @@ def main():
         initial_sidebar_state='auto')
     st.title('Forecasting test rig data')
     with st.sidebar:
+        st.image(
+            'https://raw.githubusercontent.com/ivanokhotnikov/test_rig_serving/master/images/logo.png'
+        )
         st.title('Settings')
         st.header('Data')
         uploaded_file = st.file_uploader(
