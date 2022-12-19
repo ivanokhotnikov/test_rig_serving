@@ -1,10 +1,7 @@
 import gcsfs
 import h5py
 from keras.models import load_model
-from streamlit import cache
 
-
-@cache(allow_output_mutation=True)
 def import_forecaster(file_name):
     """
     The import_forecaster function imports a saved model from the GCS bucket. The function takes one argument, which is the name of the file to be imported. It returns a Keras model.

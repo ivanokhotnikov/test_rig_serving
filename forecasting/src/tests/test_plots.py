@@ -5,8 +5,8 @@ from components import (build_power_features, import_forecast_features,
                         predict, read_latest_unit, read_processed_data,
                         read_unit_data, remove_step_zero)
 
-df = read_processed_data()
 features = import_forecast_features()
+df = read_processed_data(features=features + ['UNIT', 'TEST', 'TIME'])
 new_data_df = read_unit_data('HYD000130-R1_RAW.csv')
 new_data_df_wo_zero = remove_step_zero(new_data_df)
 new_interim_df = build_power_features(new_data_df_wo_zero)

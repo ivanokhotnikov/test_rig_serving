@@ -1,16 +1,16 @@
 import pandas as pd
-from streamlit import cache
 
 
-@cache
-def read_processed_data():
+def read_processed_data(features: list):
     """
-    The read_processed_data function reads the processed data from a CSV file in a GCS bucket. The function returns the data as a Pandas DataFrame.
-      
+    The read_processed_data function reads in the processed data from a Parquet file. The function takes as input a list of features to be read, and returns a Pandas DataFrame containing those features.
+    
+    Args:
+        features: list: Specify which columns to read from the parquet file
+    
     Returns:
-        A pandas dataframe
+        A pandas dataframe with the specified features
     """
-    return pd.read_csv('gs://test_rig_processed_data/processed_data.csv',
-                       header=0,
-                       index_col=False,
-                       low_memory=False)
+    return pd.read_parquet(
+        'gs://test_rig_processed_data/processed_data.parquet',
+        columns=features)

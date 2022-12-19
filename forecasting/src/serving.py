@@ -102,6 +102,7 @@ def main():
                 with st.spinner('Updating processed data'):
                     current_processed_df = read_raw_data()
                     upload_processed_data(current_processed_df)
+                    current_processed_df = None
                 st.write(
                     f'{uploaded_file.name} has been uploaded to the raw data storage'
                 )
@@ -120,10 +121,6 @@ def main():
                                         use_container_width=True)
     if explore_data_flag:
         st.header('Raw data')
-        if current_processed_df is None:
-            current_processed_df = read_processed_data()
-        if forecast_features is None:
-            forecast_features = import_forecast_features()
         st.subheader('Raw unit data storage')
         num_files, num_valid_files = get_raw_data_folder_stats()
         col1, col2 = st.columns(2)
@@ -131,10 +128,10 @@ def main():
         col2.metric(label='Number of raw files with valid names',
                     value=num_valid_files)
         unit = None
+        units = read_processed_data(features=['UNIT'])
         unit = st.selectbox('Select the unit number to display',
-                            current_processed_df['UNIT'].unique().astype(int),
-                            index=len(current_processed_df['UNIT'].unique()) -
-                            1)
+                            units['UNIT'].unique().astype(int),
+                            index=len(units['UNIT'].unique()) - 1)
         unit_files_list = get_raw_data_files(unit)
         if unit is not None:
             unit_file_name = st.selectbox('Select the data file',
@@ -162,14 +159,13 @@ def main():
         )
     if plot_forecast_flag:
         st.header('Forecast')
-        if current_processed_df is None:
-            current_processed_df = read_processed_data()
-        if forecast_features is None:
-            forecast_features = import_forecast_features()
+        forecast_features = import_forecast_features()
         feature = st.selectbox('Select the feature',
                                forecast_features,
                                index=0,
                                key='feature')
+        current_processed_df = read_processed_data(
+            features=[feature, 'UNIT', 'TEST'])
         scaler = import_scaler(feature)
         forecaster = import_forecaster(feature)
         if uploaded_file is not None and not in_bucket and data_valid:

@@ -1,9 +1,6 @@
 import math
 
-from streamlit import cache
 
-
-@cache
 def build_power_features(df):
     """
     The build_power_features function builds the power features for the dataframe. It takes in a dataframe and returns a new dataframe with added columns for each of 

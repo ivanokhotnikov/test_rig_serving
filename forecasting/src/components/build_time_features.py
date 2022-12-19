@@ -1,18 +1,18 @@
 import pandas as pd
-from streamlit import cache
 
-
-@cache
 def build_time_features(df):
     """
-    The build_time_features function adds a few new columns to the dataframe. The RUNNING_SECONDS column is simply the number of seconds that have elapsed since the beginning of the run. The RUNNING_HOURS column is then calculated by dividing the total number of seconds by 3600, which converts it into hours.
+    The build_time_features function takes a dataframe as input and returns a new dataframe with two additional features:
+        1. RUNNING_SECONDS - the number of seconds since the beginning of the dataset
+        2. RUNNING_HOURS - the number of hours since the beginning of the dataset
     
     Args:
-        df: Pass the data frame that we are working on
+        df: Pass the dataframe to the function
     
     Returns:
-        A dataframe with two new columns: running_seconds, running_hours
+        A dataframe with two new columns, running_seconds and running_hours
     """
+    df['TIME'] = df['TIME'].astype(str)
     df['RUNNING_SECONDS'] = (pd.to_timedelta(range(
         len(df)), unit='s').total_seconds()).astype(int)
     df['RUNNING_HOURS'] = (df['RUNNING_SECONDS'] / 3600).astype(float)

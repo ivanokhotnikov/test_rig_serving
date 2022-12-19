@@ -1,9 +1,7 @@
 from components import create_sequences
 from components.constants import LOOKBACK
-from streamlit import cache
 
 
-@cache
 def predict(data_df, feature, scaler, forecaster):
     """
     The predict function takes a dataframe containing the feature to be forecasted, the scaler used to normalize the data, and the forecaster model. It returns an array of forecasts for each time step in the input feature.

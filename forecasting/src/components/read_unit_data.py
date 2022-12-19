@@ -2,10 +2,8 @@ import logging
 import re
 
 import pandas as pd
-from streamlit import cache
 
 
-@cache
 def read_unit_data(file_name):
     """
     The read_unit_data function reads a CSV file from the raw data bucket, drops rows with missing values, and adds a column for the unit number.    
@@ -21,7 +19,7 @@ def read_unit_data(file_name):
                      header=0)
     df = df.dropna(axis=0)
     try:
-        unit = int(re.split(r'_|-|/', file_name)[0][-4:].lstrip('/HYDhyd0'))
+        unit = int(re.split(r'_|-', file_name.lstrip('-/HYDhyd0'))[0][-4:])
         df['UNIT'] = unit
     except ValueError as err:
         logging.info(f'{err}\n. Cannot parse unit from {file_name}')
