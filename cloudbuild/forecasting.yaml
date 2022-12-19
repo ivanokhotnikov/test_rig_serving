@@ -6,7 +6,8 @@ steps:
     dir: "forecasting/configs"
   - name: python:3.10-slim
     id: "unit tests"
-    entrypoint: pytest
+    entrypoint: python
+    args: ["-m", "pytest"]
     dir: "forecasting/src/tests"
   - name: "gcr.io/cloud-builders/docker"
     id: "build container image"
