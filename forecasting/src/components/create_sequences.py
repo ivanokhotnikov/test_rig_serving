@@ -1,10 +1,8 @@
 import logging
 
 import numpy as np
-from streamlit import cache
 
 
-@cache
 def create_sequences(values, lookback=None, inference=False):
     """
     The create_sequences function creates a set of input sequences from the input data. The function takes as input: values: the original array of floating point data, lookback: how many timesteps back should our input data go. Returns two arrays: X - an array of sequences that will be used as inputs to the model, where each sequence is a NumPy array with shape (lookback, 1), Y - an array of expected outputs for each sequence.
