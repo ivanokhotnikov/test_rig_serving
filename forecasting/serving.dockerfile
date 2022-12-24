@@ -1,6 +1,5 @@
 FROM python:3.10-slim
-RUN apt-get update && apt-get install make
 COPY . /app
 RUN pip install --no-cache-dir -r app/configs/requirements.txt
 WORKDIR /app
-CMD make serve
+ENTRYPOINT [ "streamlit", "run", "./src/serving.py", "--server.port=8081", "--server.address=0.0.0.0", "--server.maxUploadSize=500", "--server.maxMessageSize=500"]
