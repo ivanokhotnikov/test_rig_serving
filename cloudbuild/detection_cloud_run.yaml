@@ -1,0 +1,56 @@
+steps:
+  - name: python:3.10-slim
+    id: "install requirements"
+    entrypoint: pip
+    args: ["install", "-r", "requirements.txt", "--user"]
+    dir: "anomaly_detection/configs"
+  - name: python:3.10-slim
+    id: "unit tests"
+    entrypoint: python
+    args: ["-m", "pytest"]
+    dir: "anomaly_detection/src/tests"
+  - name: "gcr.io/cloud-builders/docker"
+    id: "build container image"
+    args:
+      [
+        "build",
+        "-f",
+        "serving.dockerfile",
+        "-t",
+        "gcr.io/$PROJECT_ID/anomaly-detection:$SHORT_SHA",
+        "--network=cloudbuild",
+        ".",
+      ]
+    dir: "anomaly_detection"
+  - name: "gcr.io/cloud-builders/docker"
+    id: "push container image to container registry"
+    args: ["push", "gcr.io/$PROJECT_ID/anomaly-detection:$SHORT_SHA"]
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    id: "deploy container image to cloud run"
+    entrypoint: gcloud
+    args:
+      [
+        "run",
+        "deploy",
+        "anomaly-detection-app",
+        "--image",
+        "gcr.io/$PROJECT_ID/anomaly-detection:$SHORT_SHA",
+        "--region",
+        "europe-west1",
+        "--cpu",
+        "4",
+        "--memory",
+        "8Gi",
+        "--timeout",
+        "3600",
+        "--allow-unauthenticated",
+        "--platform",
+        "managed",
+        "--port", 
+        "8080"
+      ]
+options:
+  logging: CLOUD_LOGGING_ONLY
+images:
+  - gcr.io/$PROJECT_ID/anomaly-detection
+timeout: 3600s
