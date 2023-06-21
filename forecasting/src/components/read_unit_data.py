@@ -19,7 +19,7 @@ def read_unit_data(file_name):
                      header=0)
     df = df.dropna(axis=0)
     try:
-        unit = int(re.split(r'_|-', file_name.lstrip('-/HYDhyd0'))[0][-4:])
+        unit = int(re.split(r'_|-', file_name.lstrip('/LN2'))[0][-4:])
         df['UNIT'] = unit
     except ValueError as err:
         logging.info(f'{err}\n. Cannot parse unit from {file_name}')

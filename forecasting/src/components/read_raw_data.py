@@ -22,7 +22,7 @@ def read_raw_data():
     for blob in RAW_DATA_BUCKET.list_blobs():
         current_df = None
         try:
-            if is_name_valid(blob):
+            if is_name_valid(blob) and blob.name.endswith('.csv'):
                 current_df = pd.read_csv(f'gs://test_rig_raw_data/{blob.name}',
                                          header=0,
                                          index_col=False)
@@ -39,7 +39,7 @@ def read_raw_data():
             logging.info(f'Cannot read {blob.name}')
             continue
         logging.info(f'{blob.name} has been read')
-        unit_str = re.split(r'_|-', blob.name.lstrip('-/HYDhyd0'))[0][-4:]
+        unit_str = re.split(r'_|-', blob.name.lstrip('/LN2'))[0][-4:]
         if unit_str == '':
             logging.info(f'Cannot parse unit from {blob.name}')
             continue

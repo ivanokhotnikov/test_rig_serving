@@ -8,4 +8,4 @@ def is_name_valid(file):
     Returns:
         True if the file name ends with '.csv' and has 'RAW' in it.
     """
-    return file.name.endswith('.csv') and ('RAW' in file.name)
+    return all([r in file.name for r in ('LN', 'RAW')])

@@ -38,6 +38,11 @@ def main():
                                         value=False,
                                         help='Show data details',
                                         key='explore_data_flag')
+        current_processed_df = None
+        if explore_data_flag:
+            if st.button('Update processed data'):
+                current_processed_df = read_raw_data()
+                upload_processed_data(current_processed_df)
         st.header('Forecast')
         plot_forecast_flag = st.checkbox('Plot forecasts',
                                          value=False,
@@ -84,7 +89,6 @@ def main():
         st.write(
             'For more implementation details see: \nhttps://github.com/ivanokhotnikov/test_rig_forecast_training'
         )
-    current_processed_df = None
     forecast_features = None
     if uploaded_file is not None:
         st.header(f'Uploaded raw data file {uploaded_file.name}')
