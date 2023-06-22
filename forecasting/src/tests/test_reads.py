@@ -1,6 +1,8 @@
 from components import (read_latest_unit, read_processed_data, read_raw_data,
-                        read_unit_data, import_forecast_features)
+                        read_unit_data, import_forecast_features,
+                        get_raw_data_files, get_raw_data_folder_stats)
 import pytest
+import numpy as np
 
 
 def test_read_raw_data(capsys):
@@ -29,6 +31,9 @@ def test_read_latest_unit(capsys):
 
 
 def test_read_unit_data(capsys):
-    df = read_unit_data('HYD000130-R1_RAW.csv')
+    _, files = get_raw_data_folder_stats()
+    random_unit_int = np.random.choice(files)
+    random_unit_file_name = get_raw_data_files(random_unit_int)[0]
+    df = read_unit_data(random_unit_file_name)
     out, err = capsys.readouterr()
     assert err == ''

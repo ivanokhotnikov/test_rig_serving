@@ -1,5 +1,7 @@
+import numpy as np
 import pytest
-from components import (build_power_features, import_forecast_features,
+from components import (build_power_features, get_raw_data_files,
+                        get_raw_data_folder_stats, import_forecast_features,
                         import_forecaster, import_scaler,
                         plot_correlation_matrix, plot_forecast, plot_unit,
                         predict, read_latest_unit, read_processed_data,
@@ -7,7 +9,10 @@ from components import (build_power_features, import_forecast_features,
 
 features = import_forecast_features()
 df = read_processed_data(features=features + ['UNIT', 'TEST', 'TIME'])
-new_data_df = read_unit_data('HYD000130-R1_RAW.csv')
+_, files = get_raw_data_folder_stats()
+random_unit_int = np.random.choice(files)
+random_unit_file_name = get_raw_data_files(random_unit_int)[0]
+new_data_df = read_unit_data(random_unit_file_name)
 new_data_df_wo_zero = remove_step_zero(new_data_df)
 new_interim_df = build_power_features(new_data_df_wo_zero)
 latest_unit_df = read_latest_unit(df)
