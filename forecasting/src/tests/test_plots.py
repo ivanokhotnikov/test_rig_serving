@@ -1,11 +1,19 @@
 import numpy as np
 import pytest
-from components import (build_power_features, get_raw_data_files,
-                        get_raw_data_folder_stats, import_forecast_features,
-                        import_forecaster, import_scaler,
-                        plot_correlation_matrix, plot_forecast, plot_unit,
-                        predict, read_latest_unit, read_processed_data,
-                        read_unit_data, remove_step_zero)
+from components.build_power_features import build_power_features
+from components.get_raw_data_files import get_raw_data_files
+from components.get_raw_data_folder_stats import get_raw_data_folder_stats
+from components.import_forecast_features import import_forecast_features
+from components.import_forecaster import import_forecaster
+from components.import_scaler import import_scaler
+from components.plot_correlation_matrix import plot_correlation_matrix
+from components.plot_forecast import plot_forecast
+from components.plot_unit import plot_unit
+from components.predict import predict
+from components.read_latest_unit import read_latest_unit
+from components.read_processed_data import read_processed_data
+from components.read_unit_data import read_unit_data
+from components.remove_step_zero import remove_step_zero
 
 features = import_forecast_features()
 df = read_processed_data(features=features + ['UNIT', 'TEST', 'TIME'])

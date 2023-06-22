@@ -3,6 +3,14 @@ import logging
 import re
 
 import pandas as pd
+from components.build_power_features import build_power_features
+from components.build_time_features import build_time_features
+from components.constants import (FEATURES_NO_TIME, PROCESSED_DATA_BUCKET,
+                                  RAW_DATA_BUCKET)
+from components.is_name_valid import is_name_valid
+from components.remove_step_zero import remove_step_zero
+
+logging.basicConfig(level=logging.INFO)
 
 
 def read_raw_data():
@@ -12,11 +20,6 @@ def read_raw_data():
     Returns:
         A pandas dataframe
     """
-    logging.basicConfig(level=logging.INFO)
-    from components import (build_power_features, build_time_features,
-                            is_name_valid, remove_step_zero)
-    from components.constants import (FEATURES_NO_TIME, PROCESSED_DATA_BUCKET,
-                                      RAW_DATA_BUCKET)
     final_df = pd.DataFrame()
     units = []
     for blob in RAW_DATA_BUCKET.list_blobs():

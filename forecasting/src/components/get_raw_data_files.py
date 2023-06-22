@@ -11,7 +11,7 @@ def get_raw_data_files(unit):
     Returns:
         A list of the raw data files that are stored in the raw_data bucket
     """
-    from components import is_name_valid
+    from components.is_name_valid import is_name_valid
     from components.constants import RAW_DATA_BUCKET
     return [
         b.name for b in RAW_DATA_BUCKET.list_blobs()

@@ -1,4 +1,4 @@
-from components import create_sequences
+from components.create_sequences import create_sequences
 from components.constants import LOOKBACK
 
 

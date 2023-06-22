@@ -1,6 +1,8 @@
 import pytest
-from components import (import_forecast_features, import_forecaster,
-                        import_metrics, import_scaler)
+from components.import_forecast_features import import_forecast_features
+from components.import_forecaster import import_forecaster
+from components.import_metrics import import_metrics
+from components.import_scaler import import_scaler
 
 
 def test_import_forecast_features(capsys):

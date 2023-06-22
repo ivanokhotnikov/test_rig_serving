@@ -11,7 +11,8 @@ def is_data_valid(uploaded_file):
     Returns:
         True if the uploaded file is valid, False otherwise
     """
-    from components import is_name_valid, is_schema_valid
+    from components.is_name_valid import is_name_valid
+    from components.is_schema_valid import is_schema_valid
     name_valid = is_name_valid(uploaded_file)
     schema_valid = is_schema_valid(uploaded_file)
     if name_valid:

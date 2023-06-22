@@ -6,7 +6,7 @@ def get_raw_data_folder_stats():
     Returns:
         A tuple of the number of files and the number of valid files in the raw data folder
     """
-    from components import is_name_valid
+    from components.is_name_valid import is_name_valid
     from components.constants import RAW_DATA_BUCKET
     num_files = len([True for _ in RAW_DATA_BUCKET.list_blobs()])
     num_valid_files = len(

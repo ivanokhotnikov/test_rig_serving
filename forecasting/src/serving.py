@@ -1,12 +1,24 @@
 import streamlit as st
-from components import (build_power_features, get_raw_data_files,
-                        get_raw_data_folder_stats, import_forecast_features,
-                        import_forecaster, import_metrics, import_scaler,
-                        is_data_valid, is_in_data_bucket,
-                        plot_data_distributions, plot_forecast, plot_unit,
-                        predict, read_latest_unit, read_processed_data,
-                        read_raw_data, read_unit_data, remove_step_zero,
-                        upload_new_raw_data_file, upload_processed_data)
+from components.build_power_features import build_power_features
+from components.get_raw_data_files import get_raw_data_files
+from components.get_raw_data_folder_stats import get_raw_data_folder_stats
+from components.import_forecast_features import import_forecast_features
+from components.import_forecaster import import_forecaster
+from components.import_metrics import import_metrics
+from components.import_scaler import import_scaler
+from components.is_data_valid import is_data_valid
+from components.is_in_data_bucket import is_in_data_bucket
+from components.plot_data_distributions import plot_data_distributions
+from components.plot_forecast import plot_forecast
+from components.plot_unit import plot_unit
+from components.predict import predict
+from components.read_latest_unit import read_latest_unit
+from components.read_processed_data import read_processed_data
+from components.read_raw_data import read_raw_data
+from components.read_unit_data import read_unit_data
+from components.remove_step_zero import remove_step_zero
+from components.upload_new_raw_data_file import upload_new_raw_data_file
+from components.upload_processed_data import upload_processed_data
 
 
 def main():
